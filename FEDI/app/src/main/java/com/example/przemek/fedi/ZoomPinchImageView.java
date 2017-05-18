@@ -8,6 +8,7 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.widget.ImageView;
 
@@ -28,21 +29,41 @@ public class ZoomPinchImageView extends ImageView {
     int _imageW, _imageH;
     float _scaleFactor = 1.f;
 
-    public ZoomPinchImageView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        _scaleGestureDetector.onTouchEvent(event);
+        return true;
     }
 
-    
+    public ZoomPinchImageView(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+
+        _scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleChanger());
+    }
+
+    private class ScaleChanger extends ScaleGestureDetector.SimpleOnScaleGestureListener{
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            _scaleFactor *= detector.getScaleFactor();
+            _scaleFactor = Math.max(_minZoom, Math.min(_maxZoom, _scaleFactor));
+            invalidate();
+            requestLayout();
+            return super.onScale(detector);
+        }
+    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        int imgWidth, imgHeight;
+        int imgWidth, imgHeight, scaledWidth, scaledHeight;
         imgWidth = MeasureSpec.getSize(widthMeasureSpec);
         imgHeight = MeasureSpec.getSize(heightMeasureSpec);
-        setMeasuredDimension(Math.min(imgWidth, _imageW), Math.min(imgHeight, _imageH));
 
+        scaledWidth = Math.round(_imageW * _scaleFactor);
+        scaledHeight = Math.round(_imageH * _scaleFactor);
+
+        setMeasuredDimension(Math.min(imgWidth, scaledWidth), Math.min(imgHeight, scaledHeight));
     }
 
     @Override
@@ -50,6 +71,8 @@ public class ZoomPinchImageView extends ImageView {
         super.onDraw(canvas);
 
         canvas.save();
+//        canvas.scale(_scaleFactor,_scaleFactor);
+        canvas.scale(_scaleFactor,_scaleFactor, _scaleGestureDetector.getFocusX(), _scaleGestureDetector.getFocusY());
         canvas.drawBitmap(_bitmap,0,0,null);
         canvas.restore();
     }
