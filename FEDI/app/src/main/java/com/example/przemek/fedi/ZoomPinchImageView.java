@@ -29,28 +29,28 @@ public class ZoomPinchImageView extends ImageView {
     int _imageW, _imageH;
     float _scaleFactor = 1.f;
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        _scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleChanger());
-        return true;
-    }
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        _scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleChanger());
+//        return true;
+//    }
 
     public ZoomPinchImageView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
 
-        _scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleChanger());
+//        _scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleChanger());
     }
-
-    private class ScaleChanger extends ScaleGestureDetector.SimpleOnScaleGestureListener{
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
-            _scaleFactor *= detector.getScaleFactor();
-            _scaleFactor = Math.max(_minZoom, Math.min(_maxZoom, _scaleFactor));
-            invalidate();
-            requestLayout();
-            return super.onScale(detector);
-        }
-    }
+//
+//    private class ScaleChanger extends ScaleGestureDetector.SimpleOnScaleGestureListener{
+//        @Override
+//        public boolean onScale(ScaleGestureDetector detector) {
+//            _scaleFactor *= detector.getScaleFactor();
+//            _scaleFactor = Math.max(_minZoom, Math.min(_maxZoom, _scaleFactor));
+//            invalidate();
+//            requestLayout();
+//            return super.onScale(detector);
+//        }
+//    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -60,11 +60,11 @@ public class ZoomPinchImageView extends ImageView {
         imgWidth = MeasureSpec.getSize(widthMeasureSpec);
         imgHeight = MeasureSpec.getSize(heightMeasureSpec);
 
-        scaledWidth = Math.round(imgWidth * _scaleFactor);
-        scaledHeight = Math.round(imgHeight * _scaleFactor);
+//        scaledWidth = Math.round(imgWidth * _scaleFactor);
+//        scaledHeight = Math.round(imgHeight * _scaleFactor);
 
-        setMeasuredDimension(Math.min(imgWidth, scaledWidth), Math.min(imgHeight, scaledHeight));
-
+//        setMeasuredDimension(Math.min(imgWidth, scaledWidth), Math.min(imgHeight, scaledHeight));
+        setMeasuredDimension(Math.min(imgWidth, _imageW), Math.min(imgHeight, _imageH));
     }
 
     @Override
@@ -73,7 +73,7 @@ public class ZoomPinchImageView extends ImageView {
 
         canvas.save();
 //        canvas.scale(_scaleFactor, _scaleFactor);
-        canvas.scale(_scaleFactor, _scaleFactor, _scaleGestureDetector.getFocusX(), _scaleGestureDetector.getFocusY());
+//        canvas.scale(_scaleFactor, _scaleFactor, _scaleGestureDetector.getFocusX(), _scaleGestureDetector.getFocusY());
         canvas.drawBitmap(_bitmap,0,0,null);
         canvas.restore();
     }
