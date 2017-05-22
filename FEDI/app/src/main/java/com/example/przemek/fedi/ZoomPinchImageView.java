@@ -27,7 +27,7 @@ public class ZoomPinchImageView extends ImageView {
 
     Bitmap _bitmap;
     int _imageW, _imageH, _eventState;
-    float _scaleFactor = 1.f, _startX, _startY, _translateX, _translateY;
+    float _scaleFactor = 1.f, _startX, _startY, _translateX, _translateY, _prevTransX, _prevTransY;
     ScaleGestureDetector _scaleGestureDetector;
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener{
@@ -51,11 +51,13 @@ public class ZoomPinchImageView extends ImageView {
         switch (event.getAction() & MotionEvent.ACTION_MASK){
             case MotionEvent.ACTION_DOWN:
                 _eventState = PAN;
-                _startX = event.getX();
-                _startY = event.getY();
+                _startX = event.getX() - _prevTransX;
+                _startY = event.getY() - _prevTransY;
                 break;
             case MotionEvent.ACTION_UP:
                 _eventState = NONE;
+                _prevTransX = _translateX;
+                _prevTransY = _translateY;
                 break;
             case MotionEvent.ACTION_MOVE:
                 _translateX = event.getX() - _startX;
@@ -96,6 +98,18 @@ public class ZoomPinchImageView extends ImageView {
 
         canvas.save();
         canvas.scale(_scaleFactor, _scaleFactor);
+        if((_translateX * -1) < 0){
+            _translateX = 0;
+        }
+        else if((_translateX * -1) > _imageW*_scaleFactor - getWidth()){
+            _translateX = (_imageW * _scaleFactor - getWidth()) * -1;
+        }
+        if((_translateY * -1) < 0){
+            _translateY = 0;
+        }
+        else if((_translateY * -1) > _imageH*_scaleFactor - getHeight()){
+            _translateY = (_imageH * _scaleFactor - getHeight()) * -1;
+        }
         canvas.translate(_translateX/_scaleFactor, _translateY/_scaleFactor);
 //        canvas.scale(_scaleFactor, _scaleFactor, _scaleGestureDetector.getFocusX(), _scaleGestureDetector.getFocusY());
         canvas.drawBitmap(_bitmap,0,0,null);
