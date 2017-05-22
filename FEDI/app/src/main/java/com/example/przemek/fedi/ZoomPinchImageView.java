@@ -23,10 +23,11 @@ public class ZoomPinchImageView extends ImageView {
 
     // dorobic AscyncTask
     final static float _minZoom = 1.f, _maxZoom = 3.f;
+    final static int NONE = 0, PAN = 0, ZOOM = 2;
 
     Bitmap _bitmap;
-    int _imageW, _imageH;
-    float _scaleFactor = 1.f;
+    int _imageW, _imageH, _eventState;
+    float _scaleFactor = 1.f, _startX, _startY, _translateX, _translateY;
     ScaleGestureDetector _scaleGestureDetector;
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener{
@@ -34,8 +35,8 @@ public class ZoomPinchImageView extends ImageView {
         public boolean onScale(ScaleGestureDetector detector) {
             _scaleFactor *= detector.getScaleFactor();
             _scaleFactor = Math.max(_minZoom, Math.min(_maxZoom, _scaleFactor));
-            invalidate();
-            requestLayout();
+//            invalidate();
+//            requestLayout();
             return super.onScale(detector);
         }
     }
@@ -47,7 +48,30 @@ public class ZoomPinchImageView extends ImageView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction() & MotionEvent.ACTION_MASK){
+            case MotionEvent.ACTION_DOWN:
+                _eventState = PAN;
+                _startX = event.getX();
+                _startY = event.getY();
+                break;
+            case MotionEvent.ACTION_UP:
+                _eventState = NONE;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                _translateX = event.getX() - _startX;
+                _translateY = event.getY() - _startY;
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                _eventState = ZOOM;
+                break;
+        }
         _scaleGestureDetector.onTouchEvent(event);
+
+        if((_eventState == PAN && _scaleFactor != _minZoom) || _eventState == ZOOM){
+            invalidate();
+            requestLayout();
+        }
+
         return true;
     }
 
@@ -71,8 +95,9 @@ public class ZoomPinchImageView extends ImageView {
         super.onDraw(canvas);
 
         canvas.save();
-//        canvas.scale(_scaleFactor, _scaleFactor);
-        canvas.scale(_scaleFactor, _scaleFactor, _scaleGestureDetector.getFocusX(), _scaleGestureDetector.getFocusY());
+        canvas.scale(_scaleFactor, _scaleFactor);
+        canvas.translate(_translateX/_scaleFactor, _translateY/_scaleFactor);
+//        canvas.scale(_scaleFactor, _scaleFactor, _scaleGestureDetector.getFocusX(), _scaleGestureDetector.getFocusY());
         canvas.drawBitmap(_bitmap,0,0,null);
         canvas.restore();
     }
