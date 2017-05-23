@@ -21,6 +21,9 @@
         </activity>
         <activity android:name=".Info" />
         <activity android:name=".Editor" />
+        <activity android:name=".ImageInfo"
+            android:theme="@style/AppTheme.CustomDialogTheme">
+        </activity>
 
         <provider
             android:name="android.support.v4.content.FileProvider"

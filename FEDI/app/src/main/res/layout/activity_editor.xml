@@ -26,12 +26,22 @@
             android:visibility="invisible"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
-        <!--
-        <Button
-            android:id="@+id/MenuButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:text="Menu" /> -->
+
+    <Button
+        android:id="@+id/infoButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/ImageView"
+        android:layout_toStartOf="@+id/ImageView"
+        android:onClick="ShowImageInfo"
+        android:text="Info" />
+    <!--
+    <Button
+        android:id="@+id/MenuButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="Menu" /> -->
 </RelativeLayout>

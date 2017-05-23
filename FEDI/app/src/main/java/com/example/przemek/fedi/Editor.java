@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -46,6 +47,8 @@ public class Editor extends AppCompatActivity {
     Uri _imageUri = null;
     String _fileName;
 
+    Button _infoButton;
+
 
     //Bitmap _imageBitmap;
 
@@ -60,8 +63,7 @@ public class Editor extends AppCompatActivity {
 
         _imageView = (ImageView)findViewById(R.id.ImageView);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
-
-
+        _infoButton = (Button)findViewById(R.id.infoButton);
         _animationDuration = getResources().getInteger(android.R.integer.config_longAnimTime);
 
         CheckActivity();
@@ -209,6 +211,10 @@ public class Editor extends AppCompatActivity {
         _zoomPinchImageView.SetImgUri(_imageUri);
         _imageView.setAlpha(0.f);
         _zoomPinchImageView.setVisibility(View.VISIBLE);
+    }
+
+    public void ShowImageInfo(View view){
+        startActivity(new Intent(Editor.this, ImageInfo.class));
     }
 
 }
