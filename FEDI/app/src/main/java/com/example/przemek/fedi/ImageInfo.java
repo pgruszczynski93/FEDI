@@ -1,25 +1,18 @@
 package com.example.przemek.fedi;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.media.ExifInterface;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
+import android.text.SpannableString;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -32,6 +25,7 @@ public class ImageInfo extends AppCompatActivity {
     int _dispW, _dispH;
     TextView _imageInfoText;
     ExifInterface _exifInterface;
+    SpannableString _spanString;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -74,11 +68,12 @@ public class ImageInfo extends AppCompatActivity {
 
     String getTagString(String tag, ExifInterface exif)
     {
-        return(tag + " : " + exif.getAttribute(tag) + "\n");
+        return("<b>"+tag+"</b>" + " : " + exif.getAttribute(tag) + "<br>");
     }
 
+    @SuppressWarnings("deprecation")
     void GetExifData(ExifInterface exif){
-        String myAttribute="Exif information\n";
+        String myAttribute = "<b>Exif information</b><br>";
         myAttribute += getTagString(ExifInterface.TAG_DATETIME, exif);
         myAttribute += getTagString(ExifInterface.TAG_FLASH, exif);
         myAttribute += getTagString(ExifInterface.TAG_GPS_LATITUDE, exif);
@@ -107,7 +102,12 @@ public class ImageInfo extends AppCompatActivity {
         myAttribute += getTagString(ExifInterface.TAG_SATURATION, exif);
         myAttribute += getTagString(ExifInterface.TAG_SHARPNESS, exif);
         myAttribute += getTagString(ExifInterface.TAG_WHITE_BALANCE, exif);
-        _imageInfoText.setText(myAttribute);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            _imageInfoText.setText(Html.fromHtml(myAttribute,Html.FROM_HTML_MODE_COMPACT));
+        }
+        else {
+            _imageInfoText.setText(Html.fromHtml(myAttribute));
+        }
     }
 
     public void CloseInfo(View v){
