@@ -4,15 +4,19 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
@@ -48,6 +52,7 @@ public class Editor extends AppCompatActivity {
     String _fileName;
 
     Button _infoButton;
+    boolean _intentHasExtras;
 
 
     //Bitmap _imageBitmap;
@@ -115,24 +120,22 @@ public class Editor extends AppCompatActivity {
      * @param resultData
      */
     void SetImageToView(Intent resultData){
-        boolean intentHasExtras = resultData.hasExtra("IMAGE_TAKEN");
+        _intentHasExtras = resultData.hasExtra("IMAGE_TAKEN");
         if(resultData!=null) {
-            _imageUri = (intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
+            _imageUri = (_intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
+            Toast.makeText(this, UriConverter.getPath(this, _imageUri), Toast.LENGTH_LONG).show();
             Glide.with(this).load(_imageUri).into(_imageView); //uzywane jako thumbnail
 
-            // dodać padding do widoku
             _imageView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    Toast.makeText(Editor.this, "Dlugi klik", Toast.LENGTH_SHORT).show();
                     ZoomPinchPan();
                     return true;
                 }
             });
-            //Glide.with(this).load(_imageUri).into(_zoomPinchImageView); //uzywane w zoom animation
-//            Glide.with(this).load((intentHasExtras) ? new File(_imageUri.getPath()) : _imageUri).into(_imageView); //stary widok
         }
     }
+
 
     /***
      * Metoda sprawdza z której aktywności pochodzi zdjęcie do wczytania w widoku ImageView.
@@ -214,7 +217,9 @@ public class Editor extends AppCompatActivity {
     }
 
     public void ShowImageInfo(View view){
-        startActivity(new Intent(Editor.this, ImageInfo.class));
+        Intent info = new Intent(Editor.this, ImageInfo.class);
+        info.putExtra("IMAGE_INFO",UriConverter.getPath(this, _imageUri));
+        startActivity(info);
     }
 
 }
