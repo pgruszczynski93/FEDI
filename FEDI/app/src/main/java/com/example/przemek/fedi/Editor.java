@@ -42,7 +42,7 @@ public class Editor extends AppCompatActivity {
     int _animationDuration;
 
     // widoki zdjecia
-    ImageView _imageView;
+//    ImageView _imageView;
     ZoomPinchImageView _zoomPinchImageView;
 
     Intent _launchedIntent;
@@ -66,7 +66,7 @@ public class Editor extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editor);
 
-        _imageView = (ImageView)findViewById(R.id.ImageView);
+//        _imageView = (ImageView)findViewById(R.id.ImageView);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
         _infoButton = (Button)findViewById(R.id.infoButton);
         _animationDuration = getResources().getInteger(android.R.integer.config_longAnimTime);
@@ -124,15 +124,17 @@ public class Editor extends AppCompatActivity {
         if(resultData!=null) {
             _imageUri = (_intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
             Toast.makeText(this, UriConverter.getPath(this, _imageUri), Toast.LENGTH_LONG).show();
-            Glide.with(this).load(_imageUri).into(_imageView); //uzywane jako thumbnail
+            Glide.with(this).load(_imageUri).into(_zoomPinchImageView); //uzywane jako thumbnail
 
-            _imageView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    ZoomPinchPan();
-                    return true;
-                }
-            });
+            ZoomPinchPan();
+
+//            _zoomPinchImageView.setOnLongClickListener(new View.OnLongClickListener() {
+//                @Override
+//                public boolean onLongClick(View v) {
+//                    ZoomPinchPan();
+//                    return true;
+//                }
+//            });
         }
     }
 
@@ -164,8 +166,9 @@ public class Editor extends AppCompatActivity {
      * wartosci
      */
     void ScaleDownToView(){
-        int imageViewWidth = _imageView.getWidth();
-        int imageViewHeight = _imageView.getHeight();
+        // było _imageView
+        int imageViewWidth = _zoomPinchImageView.getWidth();
+        int imageViewHeight = _zoomPinchImageView.getHeight();
 
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
@@ -178,7 +181,7 @@ public class Editor extends AppCompatActivity {
         bmOptions.inJustDecodeBounds = false;
 
         Bitmap photoReducedSizeBitmap = BitmapFactory.decodeFile(_imageUri.toString(), bmOptions);
-        _imageView.setImageBitmap(photoReducedSizeBitmap);
+        _zoomPinchImageView.setImageBitmap(photoReducedSizeBitmap);
 
     }
 
@@ -212,8 +215,8 @@ public class Editor extends AppCompatActivity {
      */
     void ZoomPinchPan(){
         _zoomPinchImageView.SetImgUri(_imageUri);
-        _imageView.setAlpha(0.f);
-        _zoomPinchImageView.setVisibility(View.VISIBLE);
+//        _imageView.setAlpha(0.f);
+//        _zoomPinchImageView.setVisibility(View.VISIBLE);
     }
 
     public void ShowImageInfo(View view){

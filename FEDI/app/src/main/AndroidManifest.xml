@@ -11,17 +11,27 @@
         android:roundIcon="@mipmap/fedi_logo"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainMenu" />
-        <activity android:name=".HomeActivity">
+        <activity android:name=".MainMenu"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".HomeActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Info" />
-        <activity android:name=".Editor" />
+        <activity android:name=".Info"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".Editor"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"/>
         <activity android:name=".ImageInfo"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.CustomDialogTheme">
         </activity>
 
