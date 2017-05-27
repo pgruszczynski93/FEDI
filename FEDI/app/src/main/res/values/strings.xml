@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">FEDI</string>
+    <string name="action_img_info">Informacje</string>
+    <string name="action_resolution">Rozdzielczość</string>
+    <string name="action_reset_scale">Do ekranu</string>
+    <string name="action_current_scale">Przybliżenie</string>
+    <string name="action_save">Zapisz</string>
+    <string name="action_options">Opcje</string>
+
+    <color name="bar_gray">#696969</color>
 </resources>

@@ -30,13 +30,15 @@ public class ZoomPinchImageView extends ImageView {
     float _scaleFactor = 1.f, _startX, _startY, _translateX, _translateY, _prevTransX, _prevTransY;
     ScaleGestureDetector _scaleGestureDetector;
 
+    public float GetScaleFactor(){
+        return _scaleFactor;
+    }
+
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener{
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
             _scaleFactor *= detector.getScaleFactor();
             _scaleFactor = Math.max(_minZoom, Math.min(_maxZoom, _scaleFactor));
-//            invalidate();
-//            requestLayout();
             return super.onScale(detector);
         }
     }
@@ -89,7 +91,6 @@ public class ZoomPinchImageView extends ImageView {
         scaledHeight = Math.round(_imageH * _scaleFactor);
 
         setMeasuredDimension(Math.min(imgWidth, scaledWidth), Math.min(imgHeight, scaledHeight));
-//        setMeasuredDimension(Math.min(imgWidth, _imageW), Math.min(imgHeight, _imageH));
     }
 
     @Override
@@ -111,7 +112,6 @@ public class ZoomPinchImageView extends ImageView {
             _translateY = (_imageH * _scaleFactor - getHeight()) * -1;
         }
         canvas.translate(_translateX/_scaleFactor, _translateY/_scaleFactor);
-//        canvas.scale(_scaleFactor, _scaleFactor, _scaleGestureDetector.getFocusX(), _scaleGestureDetector.getFocusY());
         canvas.drawBitmap(_bitmap,0,0,null);
         canvas.restore();
     }

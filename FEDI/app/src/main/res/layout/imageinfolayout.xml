@@ -21,5 +21,5 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:onClick="CloseInfo"
-        android:text="Close" />
+        android:text="Zamknij" />
 </RelativeLayout>

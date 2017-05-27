@@ -17,7 +17,11 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -51,7 +55,7 @@ public class Editor extends AppCompatActivity {
     Uri _imageUri = null;
     String _fileName;
 
-    Button _infoButton;
+//    Button _infoButton;
     boolean _intentHasExtras;
 
 
@@ -64,14 +68,34 @@ public class Editor extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+//                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_editor);
 
 //        _imageView = (ImageView)findViewById(R.id.ImageView);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
-        _infoButton = (Button)findViewById(R.id.infoButton);
+//        _infoButton = (Button)findViewById(R.id.infoButton);
         _animationDuration = getResources().getInteger(android.R.integer.config_longAnimTime);
 
         CheckActivity();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+            getMenuInflater().inflate(R.menu.editor_menu,menu);
+            return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_img_info:
+                ShowImageInfo();
+            return true;
+
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     /***
@@ -194,21 +218,18 @@ public class Editor extends AppCompatActivity {
      *
      */
 
-    /***
-     * Maksymalizacja okna
-     * @param hasFocus
-     */
-    @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
 
         View decoratorView = getWindow().getDecorView();
-        if(hasFocus){
-            decoratorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }
+//        if(hasFocus){
+//            decoratorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+//                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+//        }
     }
+
 
     /***
      * Ustawianie zdjęcia z miniatury do pełnego widoku
@@ -219,7 +240,7 @@ public class Editor extends AppCompatActivity {
 //        _zoomPinchImageView.setVisibility(View.VISIBLE);
     }
 
-    public void ShowImageInfo(View view){
+    void ShowImageInfo(){
         Intent info = new Intent(Editor.this, ImageInfo.class);
         info.putExtra("IMAGE_INFO",UriConverter.getPath(this, _imageUri));
         startActivity(info);
