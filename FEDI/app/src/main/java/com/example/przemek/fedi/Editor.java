@@ -1,19 +1,26 @@
 package com.example.przemek.fedi;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.provider.SyncStateContract;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
@@ -38,12 +46,11 @@ import java.io.IOException;
  */
 public class Editor extends AppCompatActivity {
 
-    static final int REQUEST_CODE = 0;
+    static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
 
 
     // animacja
     Animator _currentAnimator;
-    int _animationDuration;
 
     // widoki zdjecia
 //    ImageView _imageView;
@@ -68,14 +75,13 @@ public class Editor extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-//                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+// ma byc taka koleknosc
+        HideNotifAndTitleBars();
         setContentView(R.layout.activity_editor);
 
 //        _imageView = (ImageView)findViewById(R.id.ImageView);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
 //        _infoButton = (Button)findViewById(R.id.infoButton);
-        _animationDuration = getResources().getInteger(android.R.integer.config_longAnimTime);
 
         CheckActivity();
     }
@@ -91,7 +97,7 @@ public class Editor extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.action_img_info:
-                ShowImageInfo();
+                CheckGetInfoUriPermission();
             return true;
 
         }
@@ -121,6 +127,20 @@ public class Editor extends AppCompatActivity {
         }
     }
 
+    void HideNotifAndTitleBars(){
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowCustomEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayShowHomeEnabled(false);
+        }
+
+    }
+
     /***
      * Metoda odpowiedzialna za uruchomienie intencji eksploratora plików w celu wybrania zdjęcia to załadowania, do widoku ImageView
      */
@@ -147,18 +167,8 @@ public class Editor extends AppCompatActivity {
         _intentHasExtras = resultData.hasExtra("IMAGE_TAKEN");
         if(resultData!=null) {
             _imageUri = (_intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
-            Toast.makeText(this, UriConverter.getPath(this, _imageUri), Toast.LENGTH_LONG).show();
             Glide.with(this).load(_imageUri).into(_zoomPinchImageView); //uzywane jako thumbnail
-
             ZoomPinchPan();
-
-//            _zoomPinchImageView.setOnLongClickListener(new View.OnLongClickListener() {
-//                @Override
-//                public boolean onLongClick(View v) {
-//                    ZoomPinchPan();
-//                    return true;
-//                }
-//            });
         }
     }
 
@@ -218,32 +228,49 @@ public class Editor extends AppCompatActivity {
      *
      */
 
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-
-        View decoratorView = getWindow().getDecorView();
-//        if(hasFocus){
-//            decoratorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-//                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-//                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-//                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-//        }
-    }
-
-
     /***
      * Ustawianie zdjęcia z miniatury do pełnego widoku
      */
     void ZoomPinchPan(){
         _zoomPinchImageView.SetImgUri(_imageUri);
-//        _imageView.setAlpha(0.f);
-//        _zoomPinchImageView.setVisibility(View.VISIBLE);
     }
 
     void ShowImageInfo(){
         Intent info = new Intent(Editor.this, ImageInfo.class);
+
         info.putExtra("IMAGE_INFO",UriConverter.getPath(this, _imageUri));
         startActivity(info);
+    }
+
+    // dorobić interfejs do pozwolen
+    void CheckGetInfoUriPermission(){
+        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
+            ShowImageInfo();
+        }
+        else{
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if(shouldShowRequestPermissionRationale(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+                    Toast.makeText(this,"Zezwolić aplikacji na odczyt URI?", Toast.LENGTH_SHORT).show();
+                }
+                requestPermissions(new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, READ_URI_PERMISSION);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResult){
+        if(requestCode == READ_URI_PERMISSION){
+            if(grantResult[0] == PackageManager.PERMISSION_GRANTED){
+                ShowImageInfo();
+            }
+            else{
+                Toast.makeText(this,"Czy chcesz zmodyfikować zawartość Karty Pamięci?", Toast.LENGTH_SHORT).show();
+            }
+        }
+        else{
+            super.onRequestPermissionsResult(requestCode, permissions, grantResult);
+        }
+
     }
 
 }

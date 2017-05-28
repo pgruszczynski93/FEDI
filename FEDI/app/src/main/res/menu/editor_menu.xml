@@ -5,10 +5,10 @@
         android:id="@+id/action_img_info"
         android:icon="@mipmap/info"
         android:title="@string/action_img_info"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
     <item
         android:id="@+id/action_resolution"
-        android:title="Resolution"
+        android:title="Res"
         app:showAsAction="always"/>
     <item
         android:id="@+id/action_current_scale"
@@ -24,6 +24,6 @@
         android:icon="@mipmap/save"
         android:title="@string/action_save"
         app:showAsAction="always"/>
-    <item
-        android:title="Settings" />
+
+    <item android:title="Settings" />
 </menu>
