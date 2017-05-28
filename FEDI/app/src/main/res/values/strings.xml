@@ -6,6 +6,7 @@
     <string name="action_current_scale">Przybliżenie</string>
     <string name="action_save">Zapisz</string>
     <string name="action_options">Opcje</string>
+    <string name="action_open">Otwórz</string>
 
     <color name="bar_gray">#696969</color>
 </resources>

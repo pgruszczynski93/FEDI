@@ -76,7 +76,7 @@ public class MainMenu extends AppCompatActivity {
         _circleMenu.setMainMenu(Color.parseColor("#CDCDCD"), R.mipmap.shutter, R.mipmap.shutter);
         _circleMenu.addSubMenu(Color.parseColor("#258CFF"), R.mipmap.gallery)
             .addSubMenu(Color.parseColor("#30A400"), R.mipmap.camera)
-            .addSubMenu(Color.parseColor("#FF4B32"), R.mipmap.info)
+            .addSubMenu(Color.parseColor("#FF4B32"), R.mipmap.abouticon)
             .setOnMenuSelectedListener(new OnMenuSelectedListener() {
                 @Override
                 public void onMenuSelected(int i) {
