@@ -98,7 +98,13 @@ public class Editor extends AppCompatActivity {
         switch (item.getItemId()){
             case R.id.action_img_info:
                 CheckGetInfoUriPermission();
-            return true;
+                return true;
+            case R.id.action_open:
+                OpenImageBrowser();
+                return true;
+            case R.id.action_reset_scale:
+                ResetScale();
+                return true;
 
         }
         return super.onOptionsItemSelected(item);
@@ -172,6 +178,11 @@ public class Editor extends AppCompatActivity {
         }
     }
 
+    void ResetScale(){
+        _zoomPinchImageView.SetScaleFactor(1.f);
+        _zoomPinchImageView.invalidate();
+        _zoomPinchImageView.requestLayout();
+    }
 
     /***
      * Metoda sprawdza z której aktywności pochodzi zdjęcie do wczytania w widoku ImageView.

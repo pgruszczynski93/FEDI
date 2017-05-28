@@ -5,7 +5,6 @@ import android.media.ExifInterface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
-import android.text.SpannableString;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -26,13 +25,13 @@ public class ImageInfo extends AppCompatActivity {
     int _dispW, _dispH;
     TextView _imageInfoText;
     ExifInterface _exifInterface;
-    SpannableString _spanString;
     Map<String, String> _exifTagMap;
     String _imgPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().setTitle("Informacje");
         setContentView(R.layout.imageinfolayout);
 
         _imageInfoText = (TextView)findViewById(R.id.imageInfoText);
@@ -105,12 +104,13 @@ public class ImageInfo extends AppCompatActivity {
     String getTagString(String tagDefinition, String tag, ExifInterface exif)
     {
         String atribVal = ((exif.getAttribute(tag)!=null) ? exif.getAttribute(tag) : "Brak danych");
-        return("<b>"+tagDefinition+"</b>" + " :<br>" +atribVal + "<br><br>");
+        return("<b>"+tagDefinition+"</b>" + ":<br>" +atribVal + "<br><br>");
     }
 
     @SuppressWarnings("deprecation")
     void GetExifData(ExifInterface exif){
         String myAttribute = "";
+        myAttribute += ("<b>Nazwa pliku:</b><br>"+_imgPath.substring(_imgPath.lastIndexOf("/")+1)+"<br><br>");
         myAttribute += ("<b>Ścieżka do pliku:</b><br>"+_imgPath+"<br><br>");
         for(Map.Entry<String, String> entry  : _exifTagMap.entrySet()){
             myAttribute += getTagString(entry.getValue(),entry.getKey(),exif);

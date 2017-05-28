@@ -11,6 +11,7 @@ import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.IOException;
 
@@ -33,6 +34,7 @@ public class ZoomPinchImageView extends ImageView {
     public float GetScaleFactor(){
         return _scaleFactor;
     }
+    public void SetScaleFactor(float scaleFactor){ _scaleFactor = scaleFactor; }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener{
         @Override
