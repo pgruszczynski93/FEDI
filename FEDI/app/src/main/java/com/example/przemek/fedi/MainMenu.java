@@ -11,9 +11,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.hitomi.cmlibrary.CircleMenu;
@@ -51,7 +55,7 @@ public class MainMenu extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().setTitle("Menu Główne");
+        HideNotifAndTitleBars();
         setContentView(R.layout.activity_main_menu);
 
         InstantiateCircleMenu();
@@ -66,6 +70,21 @@ public class MainMenu extends AppCompatActivity {
             _circleMenu.closeMenu();
         else
             finish();
+    }
+
+
+    void HideNotifAndTitleBars(){
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle("Menu Główne");
+        if (actionBar != null) {
+            actionBar.setDisplayShowCustomEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(false);
+        }
+
     }
 
     /***
