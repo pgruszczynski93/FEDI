@@ -64,8 +64,6 @@ public class Editor extends AppCompatActivity {
 
 //    Button _infoButton;
     boolean _intentHasExtras;
-
-
     //Bitmap _imageBitmap;
 
     /***
@@ -87,12 +85,22 @@ public class Editor extends AppCompatActivity {
     }
 
 
+    /***
+     * Metoda odpowiedzialna za wyświetlenie opcji menu (górny pasek)
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
             getMenuInflater().inflate(R.menu.editor_menu,menu);
             return true;
     }
 
+    /***
+     * Metoda odpowiedzialna za interakcje z elementami gornego menu.
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
@@ -133,6 +141,9 @@ public class Editor extends AppCompatActivity {
         }
     }
 
+    /***
+     * Metoda odpowiedzialna za schowanie paska powiadomień i nawigacji.
+     */
     void HideNotifAndTitleBars(){
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -178,6 +189,9 @@ public class Editor extends AppCompatActivity {
         }
     }
 
+    /***
+     * Metoda odpowiedzialna za zresetowanie skali zdjęcia.
+     */
     void ResetScale(){
         _zoomPinchImageView.SetScaleFactor(1.f);
         _zoomPinchImageView.invalidate();
@@ -246,6 +260,9 @@ public class Editor extends AppCompatActivity {
         _zoomPinchImageView.SetImgUri(_imageUri);
     }
 
+    /***
+     * Metoda odpowiedzialna za wyświetlenie metadanych ze zdjęcia.
+     */
     void ShowImageInfo(){
         Intent info = new Intent(Editor.this, ImageInfo.class);
 
@@ -254,6 +271,10 @@ public class Editor extends AppCompatActivity {
     }
 
     // dorobić interfejs do pozwolen
+
+    /***
+     * Metoda odpowidzialna za przydzielenie uprawnień do czytania URI.
+     */
     void CheckGetInfoUriPermission(){
         if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
             ShowImageInfo();
@@ -268,6 +289,12 @@ public class Editor extends AppCompatActivity {
         }
     }
 
+    /***
+     * Metoda odpowiedzialna za dalszą interakcję po nadaniu uprawnień.
+     * @param requestCode
+     * @param permissions
+     * @param grantResult
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResult){
         if(requestCode == READ_URI_PERMISSION){
