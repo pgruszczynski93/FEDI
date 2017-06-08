@@ -21,13 +21,65 @@
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true" />
 
+    <HorizontalScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/topScrollPanel"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true">
 
+
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/b1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="b1" />
+
+            <Button
+                android:id="@+id/b2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="b2" />
+
+            <Button
+                android:id="@+id/b3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="b3" />
+
+            <Button
+                android:id="@+id/b4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="b4" />
+
+            <Button
+                android:id="@+id/b5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="b5" />
+
+            <Button
+                android:id="@+id/b6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="b6" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
 
         <HorizontalScrollView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:id="@+id/bottomScrollPanel"
             android:layout_alignParentBottom="true"
-            android:id="@+id/horizontalScrollView">
+            android:layout_alignParentStart="true">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -35,56 +87,67 @@
                 android:orientation="horizontal" >
 
                 <Button
-                    android:id="@+id/button12"
+                    android:id="@+id/adjustButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Button" />
+                    android:text="Dopasuj" />
 
                 <Button
-                    android:id="@+id/button5"
+                    android:id="@+id/detailsButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Button" />
+                    android:text="Szczegóły" />
 
                 <Button
-                    android:id="@+id/button8"
+                    android:id="@+id/cropButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Button" />
+                    android:text="Kadruj" />
+
                 <Button
-                    android:id="@+id/button9"
+                    android:id="@+id/rotateButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Button" />
+                    android:text="Obróć" />
+
                 <Button
-                    android:id="@+id/button10"
+                    android:id="@+id/filtersButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Button" />
+                    android:text="Filtry" />
+
                 <Button
-                    android:id="@+id/button11s"
+                    android:id="@+id/histogramButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Button" />
+                    android:text="Histogram" />
+
+                <Button
+                    android:id="@+id/whiteBalanceButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Balans Bieli" />
             </LinearLayout>
         </HorizontalScrollView>
 
     <Button
-        android:id="@+id/button11"
+        android:id="@+id/histBackButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
-        android:layout_above="@+id/horizontalScrollView"
+        android:elevation="0dp"
+        android:text="@string/hist_backbutton"
+        android:layout_above="@+id/bottomScrollPanel"
         android:layout_alignParentStart="true" />
 
     <Button
-        android:id="@+id/button13"
+        android:id="@+id/histNextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
-        android:layout_above="@+id/horizontalScrollView"
-        android:layout_alignParentEnd="true" />
+        android:layout_above="@+id/bottomScrollPanel"
+        android:layout_alignParentEnd="true"
+        android:elevation="0dp"
+        android:text="@string/hist_nextbutton" />
 
     <!--
     <Button

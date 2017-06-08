@@ -7,6 +7,8 @@
     <string name="action_save">Zapisz</string>
     <string name="action_options">Opcje</string>
     <string name="action_open">Otwórz</string>
+    <string name="hist_backbutton">\u003C\u002D</string>
+    <string name="hist_nextbutton">\u002D\u003E</string>
 
     <color name="bar_gray">#696969</color>
 </resources>
