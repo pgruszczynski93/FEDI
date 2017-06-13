@@ -29,47 +29,11 @@
         android:layout_alignParentStart="true">
 
 
-    <LinearLayout
+        <LinearLayout
+            android:id="@+id/topButtonsLayout"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:orientation="horizontal" >
-
-            <Button
-                android:id="@+id/b1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="b1" />
-
-            <Button
-                android:id="@+id/b2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="b2" />
-
-            <Button
-                android:id="@+id/b3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="b3" />
-
-            <Button
-                android:id="@+id/b4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="b4" />
-
-            <Button
-                android:id="@+id/b5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="b5" />
-
-            <Button
-                android:id="@+id/b6"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="b6" />
+            android:orientation="horizontal">
 
         </LinearLayout>
     </HorizontalScrollView>
@@ -82,21 +46,24 @@
             android:layout_alignParentStart="true">
 
             <LinearLayout
+                android:id="@+id/bottomButtonsLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="horizontal" >
+                android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/adjustButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:onClick="ShowAdjustments"
                     android:text="Dopasuj" />
 
                 <Button
                     android:id="@+id/detailsButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:onClick="ShowDetails"
                     android:text="Szczegóły" />
 
                 <Button
@@ -115,6 +82,7 @@
                     android:id="@+id/filtersButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:onClick="ShowFilters"
                     android:text="Filtry" />
 
                 <Button
@@ -127,6 +95,7 @@
                     android:id="@+id/whiteBalanceButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:onClick="ShowWhiteBalance"
                     android:text="Balans Bieli" />
             </LinearLayout>
         </HorizontalScrollView>

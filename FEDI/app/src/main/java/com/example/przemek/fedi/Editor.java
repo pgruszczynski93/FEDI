@@ -1,38 +1,24 @@
 package com.example.przemek.fedi;
 
-import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
-import android.os.ParcelFileDescriptor;
-import android.provider.MediaStore;
-import android.provider.SyncStateContract;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -40,6 +26,8 @@ import com.bumptech.glide.Glide;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /***
  * Klasa aktywności Edytora zdjęć.
@@ -47,10 +35,19 @@ import java.io.IOException;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
+    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 10, WHITE_BALANCE_COUNT = 2;
+    final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
+    final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
+    final String[] _filtersValues = {"F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1"};
+    final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
 
+    // tymczasowa lista buttonow
+    List<Button> _optionButtonsList;
+    String _currBottomButton, _prevBottomButton = "";
 
-    // animacja
-    Animator _currentAnimator;
+    int _buttonsCounter;
+    LinearLayout _optionsLayout;
+
 
     // widoki zdjecia
 //    ImageView _imageView;
@@ -65,6 +62,8 @@ public class Editor extends AppCompatActivity {
 //    Button _infoButton;
     boolean _intentHasExtras;
     //Bitmap _imageBitmap;
+
+
 
     /***
      * Tworzenie widoku aktywności.
@@ -82,6 +81,7 @@ public class Editor extends AppCompatActivity {
 //        _infoButton = (Button)findViewById(R.id.infoButton);
 
         CheckActivity();
+        InitOptionsBar();
     }
 
 
@@ -187,6 +187,68 @@ public class Editor extends AppCompatActivity {
             Glide.with(this).load(_imageUri).into(_zoomPinchImageView); //uzywane jako thumbnail
             ZoomPinchPan();
         }
+    }
+
+    void ResetOptionsLayout(){
+        if(_optionButtonsList != null)
+            _optionButtonsList.clear();
+        if((_optionsLayout).getChildCount() > 0)
+            ( _optionsLayout).removeAllViews();
+    }
+
+    void InitOptionsBar(){
+        _optionsLayout = (LinearLayout)findViewById(R.id.topButtonsLayout);
+        _optionsLayout.setVisibility(View.INVISIBLE);
+    }
+
+    void SetOptionsVisibility(String currBottomButton){
+        int visibility = _optionsLayout.getVisibility();
+        ResetOptionsLayout();
+        _optionsLayout.setVisibility((visibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))) ? View.INVISIBLE : View.VISIBLE);
+        _prevBottomButton = _currBottomButton;d
+    }
+
+    // DODAC ID DLA KAZDEGO BUTTONA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // SPRAWDZIC UUPRAWNIENIA DO KARTY PAMIECI !!!!!!!!!!!!!!!!!!!!!!!!!!! - jest ok stare thumbnaile
+    void FillOptionsBar(String[] buttonValues, int buttonCount){
+        _optionButtonsList = new ArrayList<>();
+        for(int i=0; i<buttonCount; i++){
+
+            Button myButton = new Button(this);
+            myButton.setText(buttonValues[i]);
+            _optionButtonsList.add(myButton);
+
+            _optionsLayout.addView(myButton,new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+    }
+
+    void ShowAdjustments(View v){
+//        _buttonsCounter = ADJUSTMENT_COUNT;
+        _currBottomButton = "adjustments";
+        SetOptionsVisibility(_currBottomButton);
+        FillOptionsBar(_adjustmentValues, ADJUSTMENT_COUNT);
+    }
+
+    void ShowDetails(View v){
+//        _buttonsCounter = DETAILS_COUNT;
+        _currBottomButton = "details";
+        SetOptionsVisibility(_currBottomButton);
+        FillOptionsBar(_detailsValues, DETAILS_COUNT);
+    }
+    void ShowFilters(View v){
+//        _buttonsCounter = FILTERS_COUNT;
+        _currBottomButton = "filters";
+        SetOptionsVisibility(_currBottomButton);
+        FillOptionsBar(_filtersValues, FILTERS_COUNT);
+    }
+    void ShowWhiteBalance(View v){
+//        _buttonsCounter = WHITE_BALANCE_COUNT;
+        _currBottomButton = "whitebalance";
+        SetOptionsVisibility(_currBottomButton);
+        FillOptionsBar(_whiteBalanceValues, WHITE_BALANCE_COUNT);
+
     }
 
     /***
