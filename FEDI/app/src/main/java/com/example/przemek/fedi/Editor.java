@@ -19,6 +19,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -42,12 +44,13 @@ public class Editor extends AppCompatActivity {
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
 
     // tymczasowa lista buttonow
-    List<Button> _optionButtonsList;
+    Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList;
     String _currBottomButton, _prevBottomButton = "";
 
     int _buttonsCounter;
-    LinearLayout _optionsLayout;
-
+    LinearLayout _optionsLayout, _sliderOptLayout;
+    TextView _optSliderText;
+    SeekBar _optSlider;
 
     // widoki zdjecia
 //    ImageView _imageView;
@@ -190,64 +193,84 @@ public class Editor extends AppCompatActivity {
     }
 
     void ResetOptionsLayout(){
-        if(_optionButtonsList != null)
-            _optionButtonsList.clear();
+//        if(buttonList != null)
+//            buttonList.clear();
         if((_optionsLayout).getChildCount() > 0)
             ( _optionsLayout).removeAllViews();
     }
 
     void InitOptionsBar(){
+        _optSliderText = (TextView)findViewById(R.id.optSliderText);
+        _optSlider = (SeekBar)findViewById(R.id.optSlider);
         _optionsLayout = (LinearLayout)findViewById(R.id.topButtonsLayout);
+        _sliderOptLayout = (LinearLayout)findViewById(R.id.scrollbarPanel);
         _optionsLayout.setVisibility(View.INVISIBLE);
+        _sliderOptLayout.setVisibility(View.INVISIBLE);
     }
 
     void SetOptionsVisibility(String currBottomButton){
-        int visibility = _optionsLayout.getVisibility();
+        int optionsVisibility = _optionsLayout.getVisibility();
+        int sliderVisibility = _sliderOptLayout.getVisibility();
         ResetOptionsLayout();
-        _optionsLayout.setVisibility((visibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))) ? View.INVISIBLE : View.VISIBLE);
-        _prevBottomButton = _currBottomButton;d
+        _optionsLayout.setVisibility((optionsVisibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))) ? View.INVISIBLE : View.VISIBLE);
+        _prevBottomButton = _currBottomButton;
     }
 
     // DODAC ID DLA KAZDEGO BUTTONA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // SPRAWDZIC UUPRAWNIENIA DO KARTY PAMIECI !!!!!!!!!!!!!!!!!!!!!!!!!!! - jest ok stare thumbnaile
-    void FillOptionsBar(String[] buttonValues, int buttonCount){
-        _optionButtonsList = new ArrayList<>();
+    void FillOptionsBar(String[] buttonValues, Button[] buttonList, int buttonCount){
         for(int i=0; i<buttonCount; i++){
 
-            Button myButton = new Button(this);
-            myButton.setText(buttonValues[i]);
-            _optionButtonsList.add(myButton);
+            buttonList[i] = new Button(this);
+            buttonList[i].setTag(buttonValues[i]);
+            buttonList[i].setText(buttonValues[i]);
+            // ma wyswietlic slider z odpowiednia etykieta
+            buttonList[i].setOnClickListener(btnClicked);
 
-            _optionsLayout.addView(myButton,new ViewGroup.LayoutParams(
+            _optionsLayout.addView(buttonList[i],new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
         }
     }
 
+    View.OnClickListener btnClicked = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Button clickedButton = (Button)v;
+            _sliderOptLayout.setVisibility(View.VISIBLE);
+            _optSliderText.setText(clickedButton.getText().toString());
+            Toast.makeText(getApplicationContext(), "clicked button", Toast.LENGTH_SHORT).show();
+        }
+    };
+
     void ShowAdjustments(View v){
 //        _buttonsCounter = ADJUSTMENT_COUNT;
         _currBottomButton = "adjustments";
+        _adjustmentsButtonsList = new Button[ADJUSTMENT_COUNT];
         SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_adjustmentValues, ADJUSTMENT_COUNT);
+        FillOptionsBar(_adjustmentValues, _adjustmentsButtonsList ,ADJUSTMENT_COUNT);
     }
 
     void ShowDetails(View v){
 //        _buttonsCounter = DETAILS_COUNT;
         _currBottomButton = "details";
+        _detailsButtonList = new Button[DETAILS_COUNT];
         SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_detailsValues, DETAILS_COUNT);
+        FillOptionsBar(_detailsValues, _detailsButtonList, DETAILS_COUNT);
     }
     void ShowFilters(View v){
 //        _buttonsCounter = FILTERS_COUNT;
         _currBottomButton = "filters";
+        _filtersButtonList = new Button[FILTERS_COUNT];
         SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_filtersValues, FILTERS_COUNT);
+        FillOptionsBar(_filtersValues, _filtersButtonList, FILTERS_COUNT);
     }
     void ShowWhiteBalance(View v){
 //        _buttonsCounter = WHITE_BALANCE_COUNT;
         _currBottomButton = "whitebalance";
+        _wbButtonList = new Button[WHITE_BALANCE_COUNT];
         SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_whiteBalanceValues, WHITE_BALANCE_COUNT);
+        FillOptionsBar(_whiteBalanceValues, _wbButtonList, WHITE_BALANCE_COUNT);
 
     }
 
