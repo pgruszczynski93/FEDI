@@ -1,5 +1,6 @@
 package com.example.przemek.fedi;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -8,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -108,7 +110,7 @@ public class Editor extends AppCompatActivity {
                 CheckGetInfoUriPermission();
                 return true;
             case R.id.action_open:
-                OpenImageBrowser();
+                ShowSaveAlert();
                 return true;
             case R.id.action_reset_scale:
                 ResetScale();
@@ -128,6 +130,11 @@ public class Editor extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent resultData){
         if(requestCode == REQUEST_CODE && resultCode == RESULT_OK){
             SetImageToView(resultData);
+            //resetuj layout slidera po wczytaniu nowego zdjecia  i layouty
+            _optionsLayout.setVisibility(View.INVISIBLE);
+            _sliderOptLayout.setVisibility(View.INVISIBLE);
+            ResetSliderLayout();
+
             //ScaleDownToView(); // zeskalowane zdjecie
 //                standrad bitmap loading vs glide version
 //                try{
@@ -157,6 +164,28 @@ public class Editor extends AppCompatActivity {
         }
 
     }
+
+    void ShowSaveAlert(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Zmiany zostaną utracone. Kontynuować?").setPositiveButton("Tak", dialogClickListener)
+                .setNegativeButton("Anuluj", dialogClickListener).show();
+    }
+
+    // listener  dla messageboxow: uzyc tez do zapisu
+    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case DialogInterface.BUTTON_POSITIVE:
+                    OpenImageBrowser();
+                    break;
+
+                case DialogInterface.BUTTON_NEGATIVE:
+                    //No button clicked
+                    break;
+            }
+        }
+    };
 
     /***
      * Metoda odpowiedzialna za uruchomienie intencji eksploratora plików w celu wybrania zdjęcia to załadowania, do widoku ImageView
@@ -239,14 +268,18 @@ public class Editor extends AppCompatActivity {
         }
     }
 
+    void ResetSliderLayout(){
+        _optSlider.setProgress(100);
+        _optSliderText.setText(_optionsLabel+" 0");
+    }
+
     // listener dla kliknietego buttona
     View.OnClickListener btnClicked = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             // reset slidera i labela po kazdym kliknieciu buttona
-            _optSlider.setProgress(100);
             _optionsLabel = ((Button) v).getText().toString();
-            _optSliderText.setText(_optionsLabel+" 0");
+            ResetSliderLayout();
             _sliderOptLayout.setVisibility(View.VISIBLE);
 
             Toast.makeText(getApplicationContext(), "clicked button", Toast.LENGTH_SHORT).show();
@@ -317,6 +350,8 @@ public class Editor extends AppCompatActivity {
          * Pobranie intencji i sprawedzenie czy posiada dodatkowe argumenty w celu przeprowadzenia odpowiednich akcji
          */
         _launchedIntent = getIntent();
+        // resetowanie slidera do nowych wartosci po kazdym nowym wczyraniu zdjecia
+        // *******************
         if(_launchedIntent.hasExtra("IMAGE_TAKEN")) LoadImageFromCamera();
         else OpenImageBrowser();
     }
