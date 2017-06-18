@@ -26,10 +26,6 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /***
  * Klasa aktywności Edytora zdjęć.
@@ -43,11 +39,12 @@ public class Editor extends AppCompatActivity {
     final String[] _filtersValues = {"F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1"};
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
 
-    // tymczasowa lista buttonow
+    //tablice: dopasowań, detali, filtrów, balansu bieli
     Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList;
-    String _currBottomButton, _prevBottomButton = "";
+    //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
+    String _currBottomButton, _prevBottomButton = "", _optionsLabel;
 
-    int _buttonsCounter;
+    int _valFromSlider;
     LinearLayout _optionsLayout, _sliderOptLayout;
     TextView _optSliderText;
     SeekBar _optSlider;
@@ -58,11 +55,8 @@ public class Editor extends AppCompatActivity {
 
     Intent _launchedIntent;
 
-    // do metadanych
     Uri _imageUri = null;
-    String _fileName;
 
-//    Button _infoButton;
     boolean _intentHasExtras;
     //Bitmap _imageBitmap;
 
@@ -85,6 +79,9 @@ public class Editor extends AppCompatActivity {
 
         CheckActivity();
         InitOptionsBar();
+        InitSliderListener();
+        // odswiezanie wartosci ze slidera
+
     }
 
 
@@ -210,9 +207,18 @@ public class Editor extends AppCompatActivity {
 
     void SetOptionsVisibility(String currBottomButton){
         int optionsVisibility = _optionsLayout.getVisibility();
-        int sliderVisibility = _sliderOptLayout.getVisibility();
         ResetOptionsLayout();
-        _optionsLayout.setVisibility((optionsVisibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))) ? View.INVISIBLE : View.VISIBLE);
+        if(optionsVisibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))){
+            _optionsLayout.setVisibility(View.INVISIBLE);
+            _sliderOptLayout.setVisibility(View.INVISIBLE);
+        }
+        else{
+            _optionsLayout.setVisibility(View.VISIBLE);
+            if(!_currBottomButton.equals(_prevBottomButton)){
+                _sliderOptLayout.setVisibility(View.INVISIBLE);
+            }
+        }
+//        _optionsLayout.setVisibility((optionsVisibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))) ? View.INVISIBLE : View.VISIBLE);
         _prevBottomButton = _currBottomButton;
     }
 
@@ -233,18 +239,41 @@ public class Editor extends AppCompatActivity {
         }
     }
 
+    // listener dla kliknietego buttona
     View.OnClickListener btnClicked = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Button clickedButton = (Button)v;
+            // reset slidera i labela po kazdym kliknieciu buttona
+            _optSlider.setProgress(100);
+            _optionsLabel = ((Button) v).getText().toString();
+            _optSliderText.setText(_optionsLabel+" 0");
             _sliderOptLayout.setVisibility(View.VISIBLE);
-            _optSliderText.setText(clickedButton.getText().toString());
+
             Toast.makeText(getApplicationContext(), "clicked button", Toast.LENGTH_SHORT).show();
         }
     };
+    // listener dla zmiany wartosci slidera
+    SeekBar.OnSeekBarChangeListener sbValueChange = new SeekBar.OnSeekBarChangeListener(){
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            // TUTAJ WRZUCIC TAKZE WSZYSTKIE OPERACJE GRAFICZNE W MOMENCIE GDY SLIDER ZMIENIA WARTOSC
+            _valFromSlider = progress-100;
+            _optSliderText.setText(_optionsLabel+" "+_valFromSlider);
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {}
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {}
+    };
+
+    void InitSliderListener(){
+        _optSlider.setOnSeekBarChangeListener(sbValueChange);
+    }
 
     void ShowAdjustments(View v){
-//        _buttonsCounter = ADJUSTMENT_COUNT;
         _currBottomButton = "adjustments";
         _adjustmentsButtonsList = new Button[ADJUSTMENT_COUNT];
         SetOptionsVisibility(_currBottomButton);
@@ -252,21 +281,18 @@ public class Editor extends AppCompatActivity {
     }
 
     void ShowDetails(View v){
-//        _buttonsCounter = DETAILS_COUNT;
         _currBottomButton = "details";
         _detailsButtonList = new Button[DETAILS_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_detailsValues, _detailsButtonList, DETAILS_COUNT);
     }
     void ShowFilters(View v){
-//        _buttonsCounter = FILTERS_COUNT;
         _currBottomButton = "filters";
         _filtersButtonList = new Button[FILTERS_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_filtersValues, _filtersButtonList, FILTERS_COUNT);
     }
     void ShowWhiteBalance(View v){
-//        _buttonsCounter = WHITE_BALANCE_COUNT;
         _currBottomButton = "whitebalance";
         _wbButtonList = new Button[WHITE_BALANCE_COUNT];
         SetOptionsVisibility(_currBottomButton);
