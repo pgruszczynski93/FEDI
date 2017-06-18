@@ -50,6 +50,8 @@ public class Editor extends AppCompatActivity {
     LinearLayout _optionsLayout, _sliderOptLayout;
     TextView _optSliderText;
     SeekBar _optSlider;
+    // okno alertow
+    AlertDialog.Builder _builder;
 
     // widoki zdjecia
 //    ImageView _imageView;
@@ -62,7 +64,63 @@ public class Editor extends AppCompatActivity {
     boolean _intentHasExtras;
     //Bitmap _imageBitmap;
 
+    // listener  dla messageboxow: uzyc tez do zapisu
+    DialogInterface.OnClickListener _dialogClickListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case DialogInterface.BUTTON_POSITIVE:
+                    OpenImageBrowser();
+                    break;
+                case DialogInterface.BUTTON_NEGATIVE:
+                    //No button clicked
+                    break;
+            }
+        }
+    };
 
+    DialogInterface.OnClickListener _saveClickListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case DialogInterface.BUTTON_POSITIVE:
+                    // tutaj wstawic zpisywanies
+                    break;
+                case DialogInterface.BUTTON_NEGATIVE:
+                    //No button clicked
+                    break;
+            }
+        }
+    };
+
+    // listener dla kliknietego buttona
+    View.OnClickListener btnClicked = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // reset slidera i labela po kazdym kliknieciu buttona
+            _optionsLabel = ((Button) v).getText().toString();
+            ResetSliderLayout();
+            _sliderOptLayout.setVisibility(View.VISIBLE);
+
+            Toast.makeText(getApplicationContext(), "clicked button", Toast.LENGTH_SHORT).show();
+        }
+    };
+    // listener dla zmiany wartosci slidera
+    SeekBar.OnSeekBarChangeListener sbValueChange = new SeekBar.OnSeekBarChangeListener(){
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            // TUTAJ WRZUCIC TAKZE WSZYSTKIE OPERACJE GRAFICZNE W MOMENCIE GDY SLIDER ZMIENIA WARTOSC
+            _valFromSlider = progress-100;
+            _optSliderText.setText(_optionsLabel+" "+_valFromSlider);
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {}
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {}
+    };
 
     /***
      * Tworzenie widoku aktywności.
@@ -83,7 +141,6 @@ public class Editor extends AppCompatActivity {
         InitOptionsBar();
         InitSliderListener();
         // odswiezanie wartosci ze slidera
-
     }
 
 
@@ -110,12 +167,14 @@ public class Editor extends AppCompatActivity {
                 CheckGetInfoUriPermission();
                 return true;
             case R.id.action_open:
-                ShowSaveAlert();
+                ShowAlert("Zmiany zostaną utracone. Kontynuować?",_dialogClickListener);
                 return true;
             case R.id.action_reset_scale:
                 ResetScale();
                 return true;
-
+            case R.id.action_save:
+                ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -134,6 +193,7 @@ public class Editor extends AppCompatActivity {
             _optionsLayout.setVisibility(View.INVISIBLE);
             _sliderOptLayout.setVisibility(View.INVISIBLE);
             ResetSliderLayout();
+            ResetScale();
 
             //ScaleDownToView(); // zeskalowane zdjecie
 //                standrad bitmap loading vs glide version
@@ -165,27 +225,11 @@ public class Editor extends AppCompatActivity {
 
     }
 
-    void ShowSaveAlert(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Zmiany zostaną utracone. Kontynuować?").setPositiveButton("Tak", dialogClickListener)
-                .setNegativeButton("Anuluj", dialogClickListener).show();
+    void ShowAlert(String message, DialogInterface.OnClickListener clickListener){
+        _builder = new AlertDialog.Builder(this);
+        _builder.setMessage(message).setPositiveButton("Tak", clickListener)
+                .setNegativeButton("Anuluj", clickListener).show();
     }
-
-    // listener  dla messageboxow: uzyc tez do zapisu
-    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            switch (which){
-                case DialogInterface.BUTTON_POSITIVE:
-                    OpenImageBrowser();
-                    break;
-
-                case DialogInterface.BUTTON_NEGATIVE:
-                    //No button clicked
-                    break;
-            }
-        }
-    };
 
     /***
      * Metoda odpowiedzialna za uruchomienie intencji eksploratora plików w celu wybrania zdjęcia to załadowania, do widoku ImageView
@@ -272,35 +316,6 @@ public class Editor extends AppCompatActivity {
         _optSlider.setProgress(100);
         _optSliderText.setText(_optionsLabel+" 0");
     }
-
-    // listener dla kliknietego buttona
-    View.OnClickListener btnClicked = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // reset slidera i labela po kazdym kliknieciu buttona
-            _optionsLabel = ((Button) v).getText().toString();
-            ResetSliderLayout();
-            _sliderOptLayout.setVisibility(View.VISIBLE);
-
-            Toast.makeText(getApplicationContext(), "clicked button", Toast.LENGTH_SHORT).show();
-        }
-    };
-    // listener dla zmiany wartosci slidera
-    SeekBar.OnSeekBarChangeListener sbValueChange = new SeekBar.OnSeekBarChangeListener(){
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-            // TUTAJ WRZUCIC TAKZE WSZYSTKIE OPERACJE GRAFICZNE W MOMENCIE GDY SLIDER ZMIENIA WARTOSC
-            _valFromSlider = progress-100;
-            _optSliderText.setText(_optionsLabel+" "+_valFromSlider);
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {}
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {}
-    };
 
     void InitSliderListener(){
         _optSlider.setOnSeekBarChangeListener(sbValueChange);
@@ -392,10 +407,7 @@ public class Editor extends AppCompatActivity {
 
     //dodać sprawdzanie orientacji zdjecia po zrobieniu go
     /***
-     *
      * OPCJONALNE
-     *
-     *
      *
      */
 
