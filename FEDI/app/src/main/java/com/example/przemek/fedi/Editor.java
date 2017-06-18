@@ -365,8 +365,6 @@ public class Editor extends AppCompatActivity {
          * Pobranie intencji i sprawedzenie czy posiada dodatkowe argumenty w celu przeprowadzenia odpowiednich akcji
          */
         _launchedIntent = getIntent();
-        // resetowanie slidera do nowych wartosci po kazdym nowym wczyraniu zdjecia
-        // *******************
         if(_launchedIntent.hasExtra("IMAGE_TAKEN")) LoadImageFromCamera();
         else OpenImageBrowser();
     }

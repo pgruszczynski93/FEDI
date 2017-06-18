@@ -79,78 +79,111 @@
             android:background="@color/colorPrimary"
             android:layout_alignParentStart="true">
 
-            <LinearLayout
-                android:id="@+id/bottomButtonsLayout"
+        <LinearLayout
+            android:id="@+id/bottomButtonsLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@color/colorPrimary"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/adjustButton"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="ShowAdjustments"
+                android:text="Dopasuj" />
 
-                <Button
-                    android:id="@+id/adjustButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="ShowAdjustments"
-                    android:text="Dopasuj" />
+            <Button
+                android:id="@+id/detailsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="ShowDetails"
+                android:text="Szczegóły" />
 
-                <Button
-                    android:id="@+id/detailsButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="ShowDetails"
-                    android:text="Szczegóły" />
+            <Button
+                android:id="@+id/cropButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Kadruj" />
 
-                <Button
-                    android:id="@+id/cropButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Kadruj" />
+            <Button
+                android:id="@+id/rotateButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Obróć" />
 
-                <Button
-                    android:id="@+id/rotateButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Obróć" />
+            <Button
+                android:id="@+id/filtersButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="ShowFilters"
+                android:text="Filtry" />
 
-                <Button
-                    android:id="@+id/filtersButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="ShowFilters"
-                    android:text="Filtry" />
+            <Button
+                android:id="@+id/histogramButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Histogram" />
 
-                <Button
-                    android:id="@+id/histogramButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Histogram" />
-
-                <Button
-                    android:id="@+id/whiteBalanceButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="ShowWhiteBalance"
-                    android:text="Balans Bieli" />
-            </LinearLayout>
+            <Button
+                android:id="@+id/whiteBalanceButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="ShowWhiteBalance"
+                android:text="Balans Bieli" />
+        </LinearLayout>
         </HorizontalScrollView>
 
-    <Button
-        android:id="@+id/histBackButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:elevation="0dp"
-        android:text="@string/hist_backbutton"
-        android:layout_above="@+id/bottomScrollPanel"
-        android:layout_alignParentStart="true" />
-
-    <Button
-        android:id="@+id/histNextButton"
+    <LinearLayout
+        android:id="@+id/bottomMenuLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/bottomScrollPanel"
         android:layout_alignParentEnd="true"
-        android:elevation="0dp"
-        android:text="@string/hist_nextbutton" />
+        android:layout_alignParentStart="true"
+        android:background="@color/colorPrimary"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottomScrollPanel"
+            android:layout_alignParentEnd="true"
+            android:layout_weight="1"
+            android:text="Anuluj" />
+
+        <Button
+            android:id="@+id/histBackButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottomScrollPanel"
+            android:layout_toEndOf="@+id/confirmButton"
+            android:layout_weight="1"
+            android:elevation="0dp"
+            android:text="@string/hist_backbutton" />
+
+        <Button
+            android:id="@+id/histNextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/histBackButton"
+            android:layout_alignBottom="@+id/histBackButton"
+            android:layout_toStartOf="@+id/cancelButton"
+            android:layout_weight="1"
+            android:elevation="0dp"
+            android:text="@string/hist_nextbutton" />
+
+        <Button
+            android:id="@+id/confirmButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottomScrollPanel"
+            android:layout_alignParentStart="true"
+            android:layout_weight="1"
+            android:text="OK" />
+    </LinearLayout>
 
     <!--
     <Button
