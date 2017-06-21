@@ -111,6 +111,8 @@
                 android:id="@+id/rotateButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:elevation="0dp"
+                android:onClick="ShowRotation"
                 android:text="Obróć" />
 
             <Button

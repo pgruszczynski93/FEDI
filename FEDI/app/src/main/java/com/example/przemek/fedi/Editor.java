@@ -35,14 +35,15 @@ import java.io.File;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 10, WHITE_BALANCE_COUNT = 2;
+    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 10, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
     final String[] _filtersValues = {"F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1"};
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
+    final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
 
     //tablice: dopasowań, detali, filtrów, balansu bieli
-    Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList;
+    Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList;
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
     String _currBottomButton, _prevBottomButton = "", _optionsLabel;
 
@@ -140,6 +141,7 @@ public class Editor extends AppCompatActivity {
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
+
         // odswiezanie wartosci ze slidera
     }
 
@@ -345,9 +347,14 @@ public class Editor extends AppCompatActivity {
         _wbButtonList = new Button[WHITE_BALANCE_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_whiteBalanceValues, _wbButtonList, WHITE_BALANCE_COUNT);
-
     }
 
+    void ShowRotation(View v){
+        _currBottomButton = "rotation";
+        _rotationButtonList = new Button[ROTATIONS_COUNT];
+        SetOptionsVisibility(_currBottomButton);
+        FillOptionsBar(_rotationValues, _rotationButtonList, ROTATIONS_COUNT);
+    }
     /***
      * Metoda odpowiedzialna za zresetowanie skali zdjęcia.
      */
