@@ -105,6 +105,7 @@
                 android:id="@+id/cropButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:onClick="CropImage"
                 android:text="Kadruj" />
 
             <Button
@@ -126,6 +127,7 @@
                 android:id="@+id/histogramButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:onClick="ShowHistogram"
                 android:text="Histogram" />
 
             <Button

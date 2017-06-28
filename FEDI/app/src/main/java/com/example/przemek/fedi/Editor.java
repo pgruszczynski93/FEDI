@@ -1,17 +1,24 @@
 package com.example.przemek.fedi;
 
+import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,8 +33,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.signature.StringSignature;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 /***
  * Klasa aktywności Edytora zdjęć.
@@ -38,10 +51,15 @@ public class Editor extends AppCompatActivity {
     final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 10, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
-    final String[] _filtersValues = {"F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1", "F1"};
+    final String[] _filtersValues = {"Negatyw", "Szarość 1", "Rozmycie", "F1", "F1", "F1", "F1", "F1", "F1", "F1"};
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
 
+
+    FediCore _coreOperation;
+    Bitmap _inputBitmap, _resultBitmap;
+    /// NOWE
+    Bitmap _imageBitmap;
     //tablice: dopasowań, detali, filtrów, balansu bieli
     Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList;
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
@@ -94,6 +112,7 @@ public class Editor extends AppCompatActivity {
         }
     };
 
+    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TESTOWO!!!!!!!!!!!!!!!!!!! */
     // listener dla kliknietego buttona
     View.OnClickListener btnClicked = new View.OnClickListener() {
         @Override
@@ -103,9 +122,83 @@ public class Editor extends AppCompatActivity {
             ResetSliderLayout();
             _sliderOptLayout.setVisibility(View.VISIBLE);
 
-            Toast.makeText(getApplicationContext(), "clicked button", Toast.LENGTH_SHORT).show();
+            if(_optionsLabel.equals("Rozmycie")){
+                // dorobić pasek ladowaniie
+                BlurEffect();
+            }
+            else if(_optionsLabel.equals("Negatyw")){
+                InvertEffect();
+            }
+            else if(_optionsLabel.equals("Szarość 1")){
+                GrayscaleAverageEffect();
+            }
         }
     };
+    // PRZENIESC EFEKTY DO INNEJ KLASY
+    // PRZENIESC EFEKTY DO INNEJ KLASY
+    // PRZENIESC EFEKTY DO INNEJ KLASY
+    void BlurEffect(){
+        try {
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+            _resultBitmap = _coreOperation.Blur(this, _inputBitmap);
+            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+            Glide
+                    .with( this )
+                    .load( GetImageUri(this, _resultBitmap) )
+                    .diskCacheStrategy( DiskCacheStrategy.NONE )
+                    .skipMemoryCache( true )
+                    .into( _zoomPinchImageView);
+
+        } catch (IOException e) {
+            Toast.makeText(getApplicationContext(), "Nie można użyć rozmycia", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+    void GrayscaleAverageEffect(){
+        try {
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+            _resultBitmap = _coreOperation.GrayScaleAvg(this, _inputBitmap);
+            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+            Glide
+                    .with( this )
+                    .load( GetImageUri(this, _resultBitmap) )
+                    .diskCacheStrategy( DiskCacheStrategy.NONE )
+                    .skipMemoryCache( true )
+                    .into( _zoomPinchImageView);
+
+        } catch (IOException e) {
+            Toast.makeText(getApplicationContext(), "Nie można użyć rozmycia", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+    void InvertEffect(){
+        try {
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+            _resultBitmap = _coreOperation.Invert(this, _inputBitmap);
+            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+            Glide
+                    .with( this )
+                    .load( GetImageUri(this, _resultBitmap) )
+                    .diskCacheStrategy( DiskCacheStrategy.NONE )
+                    .skipMemoryCache( true )
+                    .into( _zoomPinchImageView);
+
+        } catch (IOException e) {
+            Toast.makeText(getApplicationContext(), "Nie można użyć rozmycia", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+    // PRZENIESC EFEKTY DO INNEJ KLASY
+    // PRZENIESC EFEKTY DO INNEJ KLASY
+    // PRZENIESC EFEKTY DO INNEJ KLASY
+    public Uri GetImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        return Uri.parse(path);
+    }
+    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TESTOWO!!!!!!!!!!!!!!!!!!! */
+
     // listener dla zmiany wartosci slidera
     SeekBar.OnSeekBarChangeListener sbValueChange = new SeekBar.OnSeekBarChangeListener(){
         @Override
@@ -141,6 +234,9 @@ public class Editor extends AppCompatActivity {
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
+
+        //===========================================================================================            INIT CORA
+        _coreOperation = new FediCore();
 
         // odswiezanie wartosci ze slidera
     }
@@ -208,6 +304,14 @@ public class Editor extends AppCompatActivity {
 //                }
 //            }
         }
+
+        //kadrowanie
+//        if(requestCode == 2 && resultCode == RESULT_OK && resultData != null)
+//        {
+//            Bundle extras = resultData.getExtras();
+//            Bitmap image = extras.getParcelable("data");
+//            _zoomPinchImageView.setImageBitmap(image);
+//        }
     }
 
     /***
@@ -259,8 +363,25 @@ public class Editor extends AppCompatActivity {
         _intentHasExtras = resultData.hasExtra("IMAGE_TAKEN");
         if(resultData!=null) {
             _imageUri = (_intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
-            Glide.with(this).load(_imageUri).into(_zoomPinchImageView); //uzywane jako thumbnail
-            ZoomPinchPan();
+//            Glide.with(this).load(_imageUri).centerCrop().into(_zoomPinchImageView); //uzywane jako thumbnail
+//
+            Glide
+                    .with( this )
+                    .load(_imageUri)
+                    .diskCacheStrategy( DiskCacheStrategy.NONE )
+                    .skipMemoryCache( true )
+                    .into( _zoomPinchImageView);
+
+//                try{
+//                    _imageBitmap = GetBitmapFromUri(_imageUri);
+//                    _zoomPinchImageView.setImageBitmap(_imageBitmap);
+//                }
+//                catch(IOException e){
+//                    e.printStackTrace();
+//                }
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ZAWSZE PRZESTAWIAC URI PRZED WYWOLANIEM ZDJECIA !!!!!!!!!!!!!!!!!!!!
+            _zoomPinchImageView.SetImgUri(_imageUri);
+
         }
     }
 
@@ -355,6 +476,36 @@ public class Editor extends AppCompatActivity {
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_rotationValues, _rotationButtonList, ROTATIONS_COUNT);
     }
+
+    void ShowHistogram(View v){
+        Toast.makeText(this, "dupa", Toast.LENGTH_SHORT).show();
+    }
+
+    void CropImage(View v){
+        try{
+//            Toast.makeText(this, "DUPAAA!!!", Toast.LENGTH_SHORT).show();
+//            Intent cropIntent = new Intent("com.android.camera.action.CROP");
+//            cropIntent.setDataAndType(_imageUri,"image/*");
+//            cropIntent.putExtra("crop","true");
+//            cropIntent.putExtra("outputX",180);
+//            cropIntent.putExtra("outputY",180);
+//            cropIntent.putExtra("aspectX",3);
+//            cropIntent.putExtra("aspectX",4);
+//            cropIntent.putExtra("scaleUpIfNeeded",true);
+//            cropIntent.putExtra("return-data",true);
+            //startActivityForResult(cropIntent,1);
+//            Intent imageDownload = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//            imageDownload.putExtra("crop", "true");
+//            imageDownload.putExtra("aspectX", 1);
+//            imageDownload.putExtra("aspectY", 1);
+//            imageDownload.putExtra("outputX", 200);
+//            imageDownload.putExtra("outputY", 200);
+//            imageDownload.putExtra("return-data", true);
+//            startActivityForResult(imageDownload, 2);
+        }catch (ActivityNotFoundException ex){
+            Toast.makeText(this, "Brak aktywności", Toast.LENGTH_SHORT).show();
+        }
+    }
     /***
      * Metoda odpowiedzialna za zresetowanie skali zdjęcia.
      */
@@ -377,13 +528,13 @@ public class Editor extends AppCompatActivity {
     }
 
     //without glide
-//    Bitmap GetBitmapFromUri(Uri uri) throws IOException{
-//        ParcelFileDescriptor parcelFileDescriptor = getContentResolver().openFileDescriptor(uri,"r");
-//        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-//        Bitmap bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor);
-//        parcelFileDescriptor.close();
-//        return bitmap;
-//    }
+    Bitmap GetBitmapFromUri(Uri uri) throws IOException {
+        ParcelFileDescriptor parcelFileDescriptor = getContentResolver().openFileDescriptor(uri,"r");
+        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+        Bitmap bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+        parcelFileDescriptor.close();
+        return bitmap;
+    }
 
     /***
      * Skalowanie zdjęcia do rozmiaru panelu image view
@@ -415,13 +566,6 @@ public class Editor extends AppCompatActivity {
      * OPCJONALNE
      *
      */
-
-    /***
-     * Ustawianie zdjęcia z miniatury do pełnego widoku
-     */
-    void ZoomPinchPan(){
-        _zoomPinchImageView.SetImgUri(_imageUri);
-    }
 
     /***
      * Metoda odpowiedzialna za wyświetlenie metadanych ze zdjęcia.
