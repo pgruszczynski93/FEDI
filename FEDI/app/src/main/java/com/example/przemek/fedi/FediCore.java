@@ -52,7 +52,8 @@ public class FediCore {
     public Bitmap GrayScaleAvg(Context context, Bitmap image){
         _renderScript = RenderScript.create(context);
 
-        _outputBitmap = Bitmap.createBitmap(image);
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
 
         ScriptC_grayscale_average grayscale_average = new ScriptC_grayscale_average(_renderScript);
 
@@ -71,6 +72,7 @@ public class FediCore {
     public Bitmap Invert(Context context, Bitmap image){
         _renderScript = RenderScript.create(context);
 
+        _inputBitmap = image;
         _outputBitmap = Bitmap.createBitmap(image);
 
         ScriptC_invert invert = new ScriptC_invert(_renderScript);
