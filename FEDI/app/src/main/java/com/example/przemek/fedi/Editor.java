@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -48,10 +49,10 @@ import java.util.concurrent.ExecutionException;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 10, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
+    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 11, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
-    final String[] _filtersValues = {"Negatyw", "Szarość 1", "Rozmycie", "F1", "F1", "F1", "F1", "F1", "F1", "F1"};
+    final String[] _filtersValues = {"Negatyw", "Szarość - Średnia", "Szarość - YUV", "Rozmycie", "Bloom", "F1", "F1", "F1", "F1", "F1", "F1"};
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
 
@@ -122,71 +123,67 @@ public class Editor extends AppCompatActivity {
             ResetSliderLayout();
             _sliderOptLayout.setVisibility(View.VISIBLE);
 
-            if(_optionsLabel.equals("Rozmycie")){
-                // dorobić pasek ladowaniie
-                BlurEffect();
+            long stop;
+            long start = SystemClock.elapsedRealtime();
+            try{
+                if(_optionsLabel.equals("Rozmycie")){
+                    // dorobić pasek ladowaniie
+                    BlurEffect();
+                }
+                else if(_optionsLabel.equals("Negatyw")){
+                    InvertEffect();
+                }
+                else if(_optionsLabel.equals("Szarość - Średnia")){
+                    GrayscaleAverageEffect();
+                }
+                else if(_optionsLabel.equals("Szarość - YUV")){
+                    GrayscaleYUVEffect();
+                }
+                else if(_optionsLabel.equals("Bloom")){
+                    BloomEffect();
+                }
             }
-            else if(_optionsLabel.equals("Negatyw")){
-                InvertEffect();
+            catch (IOException e){
+                Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
             }
-            else if(_optionsLabel.equals("Szarość 1")){
-                GrayscaleAverageEffect();
-            }
+            stop = SystemClock.elapsedRealtime() - start;
+            Toast.makeText(getApplicationContext(), "CZAS "+Float.toString(stop/1000f), Toast.LENGTH_SHORT).show();
         }
     };
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
-    void BlurEffect(){
-        try {
+    void BlurEffect() throws IOException{
             _inputBitmap = GetBitmapFromUri(_imageUri);
             _resultBitmap = _coreOperation.Blur(this, _inputBitmap);
             _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-            Glide
-                    .with( this )
-                    .load( GetImageUri(this, _resultBitmap) )
-                    .diskCacheStrategy( DiskCacheStrategy.NONE )
-                    .skipMemoryCache( true )
-                    .into( _zoomPinchImageView);
-
-        } catch (IOException e) {
-            Toast.makeText(getApplicationContext(), "Nie można użyć rozmycia", Toast.LENGTH_SHORT).show();
-
-        }
+            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
     }
-    void GrayscaleAverageEffect(){
-        try {
+    void GrayscaleAverageEffect() throws IOException{
             _inputBitmap = GetBitmapFromUri(_imageUri);
             _resultBitmap = _coreOperation.GrayScaleAvg(this, _inputBitmap);
             _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-            Glide
-                    .with( this )
-                    .load( GetImageUri(this, _resultBitmap) )
-                    .diskCacheStrategy( DiskCacheStrategy.NONE )
-                    .skipMemoryCache( true )
-                    .into( _zoomPinchImageView);
+             Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
 
-        } catch (IOException e) {
-            Toast.makeText(getApplicationContext(), "Nie można użyć rozmycia", Toast.LENGTH_SHORT).show();
-
-        }
     }
-    void InvertEffect(){
-        try {
+    void GrayscaleYUVEffect() throws IOException{
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+            _resultBitmap = _coreOperation.GrayScaleYUV(this, _inputBitmap);
+            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+    }
+    void InvertEffect() throws IOException{
             _inputBitmap = GetBitmapFromUri(_imageUri);
             _resultBitmap = _coreOperation.Invert(this, _inputBitmap);
             _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-            Glide
-                    .with( this )
-                    .load( GetImageUri(this, _resultBitmap) )
-                    .diskCacheStrategy( DiskCacheStrategy.NONE )
-                    .skipMemoryCache( true )
-                    .into( _zoomPinchImageView);
+            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+    }
 
-        } catch (IOException e) {
-            Toast.makeText(getApplicationContext(), "Nie można użyć rozmycia", Toast.LENGTH_SHORT).show();
-
-        }
+    void BloomEffect() throws IOException{
+        _inputBitmap = GetBitmapFromUri(_imageUri);
+        _resultBitmap = _coreOperation.Bloom(this, _inputBitmap);
+        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
     }
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY

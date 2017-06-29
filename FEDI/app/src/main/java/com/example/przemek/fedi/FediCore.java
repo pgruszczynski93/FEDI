@@ -69,6 +69,26 @@ public class FediCore {
         return _outputBitmap;
     }
 
+    public Bitmap GrayScaleYUV(Context context, Bitmap image){
+        _renderScript = RenderScript.create(context);
+
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
+
+        ScriptC_grayscale_yuv grayscale_yuv = new ScriptC_grayscale_yuv(_renderScript);
+
+        _inAllocation = Allocation.createFromBitmap(_renderScript, _inputBitmap);
+        _outAllocation = Allocation.createFromBitmap(_renderScript, _outputBitmap);
+
+        grayscale_yuv.forEach_grayscale_yuv(_inAllocation,_outAllocation);
+        _outAllocation.copyTo(_outputBitmap);
+
+        DestroyObjects();
+        grayscale_yuv.destroy();
+
+        return _outputBitmap;
+    }
+
     public Bitmap Invert(Context context, Bitmap image){
         _renderScript = RenderScript.create(context);
 
@@ -85,6 +105,39 @@ public class FediCore {
 
         DestroyObjects();
         invert.destroy();
+
+        return _outputBitmap;
+    }
+
+    //dodać parametr ze slidera - natezenie swiatla i slidery
+    public Bitmap Bloom(Context context, Bitmap image){
+        _renderScript = RenderScript.create(context);
+
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
+
+        ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(_renderScript, Element.U8_4(_renderScript));
+        ScriptIntrinsicBlend blend = ScriptIntrinsicBlend.create(_renderScript, Element.U8_4(_renderScript));
+        ScriptC_bloom bloom = new ScriptC_bloom(_renderScript);
+
+        _inAllocation = Allocation.createFromBitmap(_renderScript, _inputBitmap);
+        _outAllocation = Allocation.createFromBitmap(_renderScript, _outputBitmap);
+
+        bloom.set_brightTreshold(0.15f);
+        bloom.forEach_bloom_bright_pass(_inAllocation, _outAllocation);
+
+        blur.setRadius(25.f);
+        blur.setInput(_inAllocation);
+        blur.forEach(_outAllocation);
+
+        blend.forEachAdd(_inAllocation, _outAllocation);
+
+        _outAllocation.copyTo(_outputBitmap);
+
+        DestroyObjects();
+        blur.destroy();
+        blend.destroy();
+        bloom.destroy();
 
         return _outputBitmap;
     }
