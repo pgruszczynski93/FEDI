@@ -227,4 +227,25 @@ public class FediCore {
 
         return _outputBitmap;
     }
+
+    public Bitmap Saturation(Context context, Bitmap image){
+        _renderScript = RenderScript.create(context);
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
+
+        ScriptC_saturation saturation = new ScriptC_saturation(_renderScript);
+        saturation.set_saturation_value((float)372/(float)255);    // kontrast : -255 : 255 ->  normalizować -1 : 1
+
+        _inAllocation = Allocation.createFromBitmap(_renderScript, _inputBitmap);
+        _outAllocation = Allocation.createFromBitmap(_renderScript, _outputBitmap);
+
+        saturation.forEach_saturation(_inAllocation, _outAllocation);
+
+        _outAllocation.copyTo(_outputBitmap);
+
+        DestroyObjects();
+        saturation.destroy();
+
+        return _outputBitmap;
+    }
 }

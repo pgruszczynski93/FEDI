@@ -1,3 +1,5 @@
+#include "utils.rsh"
+
 #pragma version(1)
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
@@ -8,6 +10,7 @@ uchar4 __attribute__((kernel)) brightness(uchar4 pixel_in, uint32_t x, uint32_t 
     uchar4 pixel_out;
     float4 pixel_float = rsUnpackColor8888(pixel_in);
 
+// zoptymalizować clampem
     pixel_float.r += brightness_value;
     pixel_float.g += brightness_value;
     pixel_float.b += brightness_value;

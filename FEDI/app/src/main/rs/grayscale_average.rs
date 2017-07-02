@@ -1,3 +1,5 @@
+#include "utils.rsh"
+
 #pragma version(1)
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
