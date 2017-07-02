@@ -52,7 +52,7 @@ public class Editor extends AppCompatActivity {
     final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 11, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
-    final String[] _filtersValues = {"Negatyw", "Szarość - Średnia", "Szarość - YUV", "Rozmycie", "Bloom", "F1", "F1", "F1", "F1", "F1", "F1"};
+    final String[] _filtersValues = {"Negatyw", "Szarość - Średnia", "Szarość - YUV", "Rozmycie", "Bloom", "Sepia", "Progowanie", "F1", "F1", "F1", "F1"};
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
 
@@ -126,8 +126,10 @@ public class Editor extends AppCompatActivity {
             long stop;
             long start = SystemClock.elapsedRealtime();
             try{
-                if(_optionsLabel.equals("Rozmycie")){
-                    // dorobić pasek ladowaniie
+                if(_optionsLabel.equals("Jasność")){
+                    BrightnessEffect();
+                }
+                else if(_optionsLabel.equals("Rozmycie")){
                     BlurEffect();
                 }
                 else if(_optionsLabel.equals("Negatyw")){
@@ -142,6 +144,12 @@ public class Editor extends AppCompatActivity {
                 else if(_optionsLabel.equals("Bloom")){
                     BloomEffect();
                 }
+                else if(_optionsLabel.equals("Sepia")){
+                    SepiaEffect();
+                }
+                else if(_optionsLabel.equals("Progowanie")){
+                    TresholdEffect();
+                }
             }
             catch (IOException e){
                 Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
@@ -153,6 +161,12 @@ public class Editor extends AppCompatActivity {
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
+    void BrightnessEffect() throws IOException{
+        _inputBitmap = GetBitmapFromUri(_imageUri);
+        _resultBitmap = _coreOperation.Brightness(this, _inputBitmap);
+        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+    }
     void BlurEffect() throws IOException{
             _inputBitmap = GetBitmapFromUri(_imageUri);
             _resultBitmap = _coreOperation.Blur(this, _inputBitmap);
@@ -182,6 +196,20 @@ public class Editor extends AppCompatActivity {
     void BloomEffect() throws IOException{
         _inputBitmap = GetBitmapFromUri(_imageUri);
         _resultBitmap = _coreOperation.Bloom(this, _inputBitmap);
+        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+    }
+
+    void SepiaEffect() throws IOException{
+        _inputBitmap = GetBitmapFromUri(_imageUri);
+        _resultBitmap = _coreOperation.Sepia(this, _inputBitmap);
+        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+    }
+
+    void TresholdEffect() throws IOException{
+        _inputBitmap = GetBitmapFromUri(_imageUri);
+        _resultBitmap = _coreOperation.Treshhold(this, _inputBitmap);
         _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
         Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
     }

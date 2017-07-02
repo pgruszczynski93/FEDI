@@ -142,4 +142,68 @@ public class FediCore {
         return _outputBitmap;
     }
 
+    public Bitmap Sepia(Context context, Bitmap image){
+        _renderScript = RenderScript.create(context);
+
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
+
+        ScriptC_sepia sepia = new ScriptC_sepia(_renderScript);
+
+        _inAllocation = Allocation.createFromBitmap(_renderScript, _inputBitmap);
+        _outAllocation = Allocation.createFromBitmap(_renderScript, _outputBitmap);
+
+        sepia.forEach_sepia(_inAllocation, _outAllocation);
+
+        _outAllocation.copyTo(_outputBitmap);
+
+        DestroyObjects();
+        sepia.destroy();
+
+        return _outputBitmap;
+    }
+//!!!!!!!!!!!!!!!!!!! PAMIETAC O NORMALIZACJI lub JEJ NIE UZYWAC1!!!
+//!!!!!!!!!!!!!!!!!!! PAMIETAC O RZUTOWANIU DO FLOAT PRZY NORMALIZACJI lub JEJ NIE UZYWAC1!!!
+
+    public Bitmap Treshhold(Context context, Bitmap image){
+        _renderScript = RenderScript.create(context);
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
+
+        ScriptC_treshold treshold = new ScriptC_treshold(_renderScript);
+        treshold.set_treshold_value(((float)128/(float)255));    // prog ma byc ze slidera
+
+        _inAllocation = Allocation.createFromBitmap(_renderScript, _inputBitmap);
+        _outAllocation = Allocation.createFromBitmap(_renderScript, _outputBitmap);
+
+        treshold.forEach_treshold(_inAllocation, _outAllocation);
+
+        _outAllocation.copyTo(_outputBitmap);
+
+        DestroyObjects();
+        treshold.destroy();
+
+        return _outputBitmap;
+    }
+
+    public Bitmap Brightness(Context context, Bitmap image){
+        _renderScript = RenderScript.create(context);
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
+
+        ScriptC_brightness brightness = new ScriptC_brightness(_renderScript);
+        brightness.set_brightness_value(((float)100/(float)255));    // prog ma byc ze slidera
+
+        _inAllocation = Allocation.createFromBitmap(_renderScript, _inputBitmap);
+        _outAllocation = Allocation.createFromBitmap(_renderScript, _outputBitmap);
+
+        brightness.forEach_brightness(_inAllocation, _outAllocation);
+
+        _outAllocation.copyTo(_outputBitmap);
+
+        DestroyObjects();
+        brightness.destroy();
+
+        return _outputBitmap;
+    }
 }
