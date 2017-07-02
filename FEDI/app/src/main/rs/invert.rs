@@ -1,5 +1,6 @@
 #pragma version(1)
 #pragma rs java_package_name(com.example.przemek.fedi)
+#pragma rs_fp_relaxed
 
 uchar4 __attribute__((kernel)) invert(uchar4 pixel_in, int32_t x, int32_t y){
     uchar4 pixel_out = pixel_in;

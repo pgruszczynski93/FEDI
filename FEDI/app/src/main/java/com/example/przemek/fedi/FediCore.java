@@ -206,4 +206,25 @@ public class FediCore {
 
         return _outputBitmap;
     }
+
+    public Bitmap Contrast(Context context, Bitmap image){
+        _renderScript = RenderScript.create(context);
+        _inputBitmap = image;
+        _outputBitmap = Bitmap.createBitmap(_inputBitmap);
+
+        ScriptC_contrast contrast = new ScriptC_contrast(_renderScript);
+        contrast.set_contrast_value((float)-50/(float)255);    // kontrast : -255 : 255 ->  normalizować -1 : 1
+
+        _inAllocation = Allocation.createFromBitmap(_renderScript, _inputBitmap);
+        _outAllocation = Allocation.createFromBitmap(_renderScript, _outputBitmap);
+
+        contrast.forEach_contrast(_inAllocation, _outAllocation);
+
+        _outAllocation.copyTo(_outputBitmap);
+
+        DestroyObjects();
+        contrast.destroy();
+
+        return _outputBitmap;
+    }
 }

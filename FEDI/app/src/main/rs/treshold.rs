@@ -1,5 +1,6 @@
 #pragma version(1)
 #pragma rs java_package_name(com.example.przemek.fedi)
+#pragma rs_fp_relaxed
 
 float treshold_value;
 const float3 yuv_vector= {0.299f, 0.587f, 0.114f};

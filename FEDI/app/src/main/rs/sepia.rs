@@ -1,5 +1,6 @@
 #pragma version(1)
 #pragma rs java_package_name(com.example.przemek.fedi)
+#pragma rs_fp_relaxed
 
 const float3 sepia_red = {0.393f, 0.769f, 0.189f};
 const float3 sepia_green = {0.349f, 0.686, 0.168f};

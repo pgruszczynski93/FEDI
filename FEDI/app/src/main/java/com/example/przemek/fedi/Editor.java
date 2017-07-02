@@ -129,6 +129,9 @@ public class Editor extends AppCompatActivity {
                 if(_optionsLabel.equals("Jasność")){
                     BrightnessEffect();
                 }
+                else if(_optionsLabel.equals("Kontrast")){
+                    ContrastEffect();
+                }
                 else if(_optionsLabel.equals("Rozmycie")){
                     BlurEffect();
                 }
@@ -167,6 +170,14 @@ public class Editor extends AppCompatActivity {
         _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
         Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
     }
+
+    void ContrastEffect() throws IOException{
+        _inputBitmap = GetBitmapFromUri(_imageUri);
+        _resultBitmap = _coreOperation.Contrast(this, _inputBitmap);
+        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+    }
+
     void BlurEffect() throws IOException{
             _inputBitmap = GetBitmapFromUri(_imageUri);
             _resultBitmap = _coreOperation.Blur(this, _inputBitmap);
