@@ -1,15 +1,13 @@
 package com.example.przemek.fedi;
 
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -19,7 +17,8 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v8.renderscript.Allocation;
+import android.support.v8.renderscript.RenderScript;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,7 +26,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -35,13 +33,12 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.signature.StringSignature;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 /***
  * Klasa aktywności Edytora zdjęć.
@@ -56,11 +53,18 @@ public class Editor extends AppCompatActivity {
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
 
+//    FediCore _coreOperation;
+    final int NUM_BITMAPS = 2;
+    int mCurrentBitmap = 0;
+    Bitmap[] _bitmapsOut;
+    Allocation _inAllocation;
+    Allocation[] _outAllocations;
+    ScriptC_saturation _script;
+    RenderScriptTask _currentTask;
 
-    FediCore _coreOperation;
     Bitmap _inputBitmap, _resultBitmap;
-    /// NOWE
-    Bitmap _imageBitmap;
+
+
     //tablice: dopasowań, detali, filtrów, balansu bieli
     Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList;
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
@@ -74,8 +78,8 @@ public class Editor extends AppCompatActivity {
     AlertDialog.Builder _builder;
 
     // widoki zdjecia
-//    ImageView _imageView;
-    ZoomPinchImageView _zoomPinchImageView;
+    //ImageView _imageView;
+    public ZoomPinchImageView _zoomPinchImageView;
 
     Intent _launchedIntent;
 
@@ -83,6 +87,47 @@ public class Editor extends AppCompatActivity {
 
     boolean _intentHasExtras;
     //Bitmap _imageBitmap;
+
+
+    private class RenderScriptTask extends AsyncTask<Float, Void, Integer> {
+        Boolean issued = false;
+
+        protected Integer doInBackground(Float... values) {
+            int index = -1;
+            if (!isCancelled()) {
+                issued = true;
+                index = mCurrentBitmap;
+
+                // Set global variable in RS
+                _script.set_saturation_value(values[0]);
+
+                // Invoke saturatio filter kernel
+                _script.forEach_saturation(_inAllocation, _outAllocations[index]);
+
+                // Copy to bitmap and invalidate image view
+                _outAllocations[index].copyTo(_bitmapsOut[index]);
+                mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
+            }
+            return index;
+        }
+
+        void updateView(Integer result) {
+            if (result != -1) {
+                // Request UI update
+                _zoomPinchImageView.SetBitmap(_bitmapsOut[result]);
+            }
+        }
+
+        protected void onPostExecute(Integer result) {
+            updateView(result);
+        }
+
+        protected void onCancelled(Integer result) {
+            if (issued) {
+                updateView(result);
+            }
+        }
+    }
 
     // listener  dla messageboxow: uzyc tez do zapisu
     DialogInterface.OnClickListener _dialogClickListener = new DialogInterface.OnClickListener() {
@@ -113,6 +158,30 @@ public class Editor extends AppCompatActivity {
         }
     };
 
+    private void createScript() {
+        // Initialize RS
+        RenderScript rs = RenderScript.create(this);
+
+        // Allocate buffers
+        _inAllocation = Allocation.createFromBitmap(rs, _inputBitmap);
+        _outAllocations = new Allocation[NUM_BITMAPS];
+        for (int i = 0; i < NUM_BITMAPS; ++i) {
+            _outAllocations[i] = Allocation.createFromBitmap(rs, _bitmapsOut[i]);
+        }
+
+        // Load script
+        _script = new ScriptC_saturation(rs);
+    }
+
+    private void updateImage(final float f) {
+        if (_currentTask != null) {
+            _currentTask.cancel(false);
+        }
+        _currentTask = new RenderScriptTask();
+        _currentTask.execute(f);
+    }
+
+
     /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TESTOWO!!!!!!!!!!!!!!!!!!! */
     // listener dla kliknietego buttona
     View.OnClickListener btnClicked = new View.OnClickListener() {
@@ -123,117 +192,126 @@ public class Editor extends AppCompatActivity {
             ResetSliderLayout();
             _sliderOptLayout.setVisibility(View.VISIBLE);
 
+
+
             long stop;
             long start = SystemClock.elapsedRealtime();
-            try{
+           // try{
+
                 if(_optionsLabel.equals("Jasność")){
-                    BrightnessEffect();
+                    //_coreOperation = new FediCore(_inputBitmap, _zoomPinchImageView);
+                    //_coreOperation.CreateRenderscript(getApplicationContext(), _optionsLabel);
                 }
-                else if(_optionsLabel.equals("Kontrast")){
-                    ContrastEffect();
-                }
-                else if(_optionsLabel.equals("Nasycenie")){
-                    SaturationEffect();
-                }
-                else if(_optionsLabel.equals("Rozmycie")){
-                    BlurEffect();
-                }
-                else if(_optionsLabel.equals("Negatyw")){
-                    InvertEffect();
-                }
-                else if(_optionsLabel.equals("Szarość - Średnia")){
-                    GrayscaleAverageEffect();
-                }
-                else if(_optionsLabel.equals("Szarość - YUV")){
-                    GrayscaleYUVEffect();
-                }
-                else if(_optionsLabel.equals("Bloom")){
-                    BloomEffect();
-                }
-                else if(_optionsLabel.equals("Sepia")){
-                    SepiaEffect();
-                }
-                else if(_optionsLabel.equals("Progowanie")){
-                    TresholdEffect();
-                }
+//                else if(_optionsLabel.equals("Kontrast")){
+//                    ContrastEffect();
+//                }
+//                else if(_optionsLabel.equals("Nasycenie")){
+//                    SaturationEffect();
+//                }
+//                else if(_optionsLabel.equals("Rozmycie")){
+//                    BlurEffect();
+//                }
+//                else if(_optionsLabel.equals("Negatyw")){
+//                    InvertEffect();
+//                }
+//                else if(_optionsLabel.equals("Szarość - Średnia")){
+//                    GrayscaleAverageEffect();
+//                }
+//                else if(_optionsLabel.equals("Szarość - YUV")){
+//                    GrayscaleYUVEffect();
+//                }
+//                else if(_optionsLabel.equals("Bloom")){
+//                    BloomEffect();
+//                }
+//                else if(_optionsLabel.equals("Sepia")){
+//                    SepiaEffect();
+//                }
+//                else if(_optionsLabel.equals("Progowanie")){
+//                    TresholdEffect();
+//                }
             }
-            catch (IOException e){
-                Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
-            }
-            stop = SystemClock.elapsedRealtime() - start;
-            Toast.makeText(getApplicationContext(), "CZAS "+Float.toString(stop/1000f), Toast.LENGTH_SHORT).show();
-        }
-    };
+            //catch (IOException e){
+              //  Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
+            //}
+//            stop = SystemClock.elapsedRealtime() - start;
+//            Toast.makeText(getApplicationContext(), "CZAS "+Float.toString(stop/1000f), Toast.LENGTH_SHORT).show();
+        };
+//    };
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
-    void BrightnessEffect() throws IOException{
-        _inputBitmap = GetBitmapFromUri(_imageUri);
-        _resultBitmap = _coreOperation.Brightness(this, _inputBitmap);
-        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
+//    void BrightnessEffect(float brightness) throws IOException{
+//        /***
+//         * 1. po wcisnieciu przycisku tworzy obiekt renderscriptu
+//         * 2. wlacza sie nasłuch na sliderze
+//         * 3. okej tworzy bitmape
+//         */
+//        _resultBitmap = _coreOperation.Brightness(this, _inputBitmap, brightness);
+//        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//        _zoomPinchImageView.invalidate();
+//    }
 
-    void ContrastEffect() throws IOException{
-        _inputBitmap = GetBitmapFromUri(_imageUri);
-        _resultBitmap = _coreOperation.Contrast(this, _inputBitmap);
-        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
-
-    void SaturationEffect() throws IOException{
-        _inputBitmap = GetBitmapFromUri(_imageUri);
-        _resultBitmap = _coreOperation.Saturation(this, _inputBitmap);
-        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
-
-    void BlurEffect() throws IOException{
-            _inputBitmap = GetBitmapFromUri(_imageUri);
-            _resultBitmap = _coreOperation.Blur(this, _inputBitmap);
-            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
-    void GrayscaleAverageEffect() throws IOException{
-            _inputBitmap = GetBitmapFromUri(_imageUri);
-            _resultBitmap = _coreOperation.GrayScaleAvg(this, _inputBitmap);
-            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-             Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-
-    }
-    void GrayscaleYUVEffect() throws IOException{
-            _inputBitmap = GetBitmapFromUri(_imageUri);
-            _resultBitmap = _coreOperation.GrayScaleYUV(this, _inputBitmap);
-            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
-    void InvertEffect() throws IOException{
-            _inputBitmap = GetBitmapFromUri(_imageUri);
-            _resultBitmap = _coreOperation.Invert(this, _inputBitmap);
-            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
-
-    void BloomEffect() throws IOException{
-        _inputBitmap = GetBitmapFromUri(_imageUri);
-        _resultBitmap = _coreOperation.Bloom(this, _inputBitmap);
-        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
-
-    void SepiaEffect() throws IOException{
-        _inputBitmap = GetBitmapFromUri(_imageUri);
-        _resultBitmap = _coreOperation.Sepia(this, _inputBitmap);
-        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
-
-    void TresholdEffect() throws IOException{
-        _inputBitmap = GetBitmapFromUri(_imageUri);
-        _resultBitmap = _coreOperation.Treshhold(this, _inputBitmap);
-        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-    }
+//    void ContrastEffect() throws IOException{
+//        _inputBitmap = GetBitmapFromUri(_imageUri);
+//        _resultBitmap = _coreOperation.Contrast(this, _inputBitmap);
+//        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
+//
+//    void SaturationEffect() throws IOException{
+//        _inputBitmap = GetBitmapFromUri(_imageUri);
+//        _resultBitmap = _coreOperation.Saturation(this, _inputBitmap);
+//        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
+//
+//    void BlurEffect() throws IOException{
+//            _inputBitmap = GetBitmapFromUri(_imageUri);
+//            _resultBitmap = _coreOperation.Blur(this, _inputBitmap);
+//            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
+//    void GrayscaleAverageEffect() throws IOException{
+//            _inputBitmap = GetBitmapFromUri(_imageUri);
+//            _resultBitmap = _coreOperation.GrayScaleAvg(this, _inputBitmap);
+//            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//             Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//
+//    }
+//    void GrayscaleYUVEffect() throws IOException{
+//            _inputBitmap = GetBitmapFromUri(_imageUri);
+//            _resultBitmap = _coreOperation.GrayScaleYUV(this, _inputBitmap);
+//            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
+//    void InvertEffect() throws IOException{
+//            _inputBitmap = GetBitmapFromUri(_imageUri);
+//            _resultBitmap = _coreOperation.Invert(this, _inputBitmap);
+//            _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//            Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
+//
+//    void BloomEffect() throws IOException{
+//        _inputBitmap = GetBitmapFromUri(_imageUri);
+//        _resultBitmap = _coreOperation.Bloom(this, _inputBitmap);
+//        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
+//
+//    void SepiaEffect() throws IOException{
+//        _inputBitmap = GetBitmapFromUri(_imageUri);
+//        _resultBitmap = _coreOperation.Sepia(this, _inputBitmap);
+//        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
+//
+//    void TresholdEffect() throws IOException{
+//        _inputBitmap = GetBitmapFromUri(_imageUri);
+//        _resultBitmap = _coreOperation.Treshhold(this, _inputBitmap);
+//        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
+//        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
+//    }
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
     // PRZENIESC EFEKTY DO INNEJ KLASY
@@ -252,7 +330,18 @@ public class Editor extends AppCompatActivity {
 
             // TUTAJ WRZUCIC TAKZE WSZYSTKIE OPERACJE GRAFICZNE W MOMENCIE GDY SLIDER ZMIENIA WARTOSC
             _valFromSlider = progress-100;
-            _optSliderText.setText(_optionsLabel+" "+_valFromSlider);
+           // _optSliderText.setText(_optionsLabel+" "+_valFromSlider);
+            //try{
+                if(_optionsLabel.equals("Nasycenie")){
+
+                    float f = (((float)_valFromSlider)/100.0f);
+                    updateImage(f);
+                    _optSliderText.setText(_optionsLabel+" "+f);
+                }
+            //}
+            //catch(IOException e){
+              //  Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
+            //}
         }
 
         @Override
@@ -273,20 +362,14 @@ public class Editor extends AppCompatActivity {
         HideNotifAndTitleBars();
         setContentView(R.layout.activity_editor);
 
-//        _imageView = (ImageView)findViewById(R.id.ImageView);
+       // _imageView = (ImageView)findViewById(R.id.imageView2);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
 //        _infoButton = (Button)findViewById(R.id.infoButton);
 
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
-
-        //===========================================================================================            INIT CORA
-        _coreOperation = new FediCore();
-
-        // odswiezanie wartosci ze slidera
     }
-
 
     /***
      * Metoda odpowiedzialna za wyświetlenie opcji menu (górny pasek)
@@ -314,7 +397,7 @@ public class Editor extends AppCompatActivity {
                 ShowAlert("Zmiany zostaną utracone. Kontynuować?",_dialogClickListener);
                 return true;
             case R.id.action_reset_scale:
-                ResetScale();
+                //ResetScale();
                 return true;
             case R.id.action_save:
                 ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
@@ -338,26 +421,62 @@ public class Editor extends AppCompatActivity {
             _sliderOptLayout.setVisibility(View.INVISIBLE);
             ResetSliderLayout();
             ResetScale();
+//
+            InitRenderScriptOps();
+        }
+    }
 
-            //ScaleDownToView(); // zeskalowane zdjecie
-//                standrad bitmap loading vs glide version
-//                try{
-//                    _imageBitmap = GetBitmapFromUri(uri);
-//                    _imageView.setImageBitmap(_imageBitmap); - using standard bitmap processing vs using glide
-//                }
-//                catch(IOException e){
-//                    e.printStackTrace();
-//                }
-//            }
+    void InitRenderScriptOps(){
+        try{
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+        }
+        catch (IOException e){
+            e.printStackTrace();
         }
 
-        //kadrowanie
-//        if(requestCode == 2 && resultCode == RESULT_OK && resultData != null)
-//        {
-//            Bundle extras = resultData.getExtras();
-//            Bitmap image = extras.getParcelable("data");
-//            _zoomPinchImageView.setImageBitmap(image);
-//        }
+        _bitmapsOut = new Bitmap[NUM_BITMAPS];
+        for (int i = 0; i < NUM_BITMAPS; ++i) {
+            _bitmapsOut[i] = Bitmap.createBitmap(_inputBitmap.getWidth(),
+                    _inputBitmap.getHeight(), _inputBitmap.getConfig());
+        }
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        _bitmapsOut[mCurrentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        Glide.with(this)
+                .load(stream.toByteArray())
+                .asBitmap()
+                .diskCacheStrategy( DiskCacheStrategy.NONE )
+                .skipMemoryCache( true )
+                .into(_zoomPinchImageView);
+        mCurrentBitmap += (mCurrentBitmap + 1) % NUM_BITMAPS;
+
+        createScript();
+        updateImage(0.0f);
+    }
+
+    void SaveBitmap(Bitmap bmp){
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream("aa");
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
+            // PNG is a lossless format, the compression factor (100) is ignored
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private Bitmap loadBitmap(int resource) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        return BitmapFactory.decodeResource(getResources(), resource, options);
     }
 
     /***
@@ -411,6 +530,7 @@ public class Editor extends AppCompatActivity {
             _imageUri = (_intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
 //            Glide.with(this).load(_imageUri).centerCrop().into(_zoomPinchImageView); //uzywane jako thumbnail
 //
+
             Glide
                     .with( this )
                     .load(_imageUri)
@@ -418,22 +538,11 @@ public class Editor extends AppCompatActivity {
                     .skipMemoryCache( true )
                     .into( _zoomPinchImageView);
 
-//                try{
-//                    _imageBitmap = GetBitmapFromUri(_imageUri);
-//                    _zoomPinchImageView.setImageBitmap(_imageBitmap);
-//                }
-//                catch(IOException e){
-//                    e.printStackTrace();
-//                }
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ZAWSZE PRZESTAWIAC URI PRZED WYWOLANIEM ZDJECIA !!!!!!!!!!!!!!!!!!!!
             _zoomPinchImageView.SetImgUri(_imageUri);
-
         }
     }
 
     void ResetOptionsLayout(){
-//        if(buttonList != null)
-//            buttonList.clear();
         if((_optionsLayout).getChildCount() > 0)
             ( _optionsLayout).removeAllViews();
     }
@@ -460,7 +569,6 @@ public class Editor extends AppCompatActivity {
                 _sliderOptLayout.setVisibility(View.INVISIBLE);
             }
         }
-//        _optionsLayout.setVisibility((optionsVisibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))) ? View.INVISIBLE : View.VISIBLE);
         _prevBottomButton = _currBottomButton;
     }
 
@@ -527,31 +635,6 @@ public class Editor extends AppCompatActivity {
         Toast.makeText(this, "dupa", Toast.LENGTH_SHORT).show();
     }
 
-    void CropImage(View v){
-        try{
-//            Toast.makeText(this, "DUPAAA!!!", Toast.LENGTH_SHORT).show();
-//            Intent cropIntent = new Intent("com.android.camera.action.CROP");
-//            cropIntent.setDataAndType(_imageUri,"image/*");
-//            cropIntent.putExtra("crop","true");
-//            cropIntent.putExtra("outputX",180);
-//            cropIntent.putExtra("outputY",180);
-//            cropIntent.putExtra("aspectX",3);
-//            cropIntent.putExtra("aspectX",4);
-//            cropIntent.putExtra("scaleUpIfNeeded",true);
-//            cropIntent.putExtra("return-data",true);
-            //startActivityForResult(cropIntent,1);
-//            Intent imageDownload = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//            imageDownload.putExtra("crop", "true");
-//            imageDownload.putExtra("aspectX", 1);
-//            imageDownload.putExtra("aspectY", 1);
-//            imageDownload.putExtra("outputX", 200);
-//            imageDownload.putExtra("outputY", 200);
-//            imageDownload.putExtra("return-data", true);
-//            startActivityForResult(imageDownload, 2);
-        }catch (ActivityNotFoundException ex){
-            Toast.makeText(this, "Brak aktywności", Toast.LENGTH_SHORT).show();
-        }
-    }
     /***
      * Metoda odpowiedzialna za zresetowanie skali zdjęcia.
      */
@@ -580,31 +663,6 @@ public class Editor extends AppCompatActivity {
         Bitmap bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor);
         parcelFileDescriptor.close();
         return bitmap;
-    }
-
-    /***
-     * Skalowanie zdjęcia do rozmiaru panelu image view
-     * Pobierane są wymiary panelu imageview, nastepnie przeliczany wspolczynnik skali, a na koncu
-     * wartosci
-     */
-    void ScaleDownToView(){
-        // było _imageView
-        int imageViewWidth = _zoomPinchImageView.getWidth();
-        int imageViewHeight = _zoomPinchImageView.getHeight();
-
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(_imageUri.toString(),bmOptions);
-
-        int imageWidth = bmOptions.outWidth;
-        int imageHeight = bmOptions.outHeight;
-        int scaleFactor = Math.min(imageWidth/imageViewWidth, imageHeight/imageViewHeight);
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inJustDecodeBounds = false;
-
-        Bitmap photoReducedSizeBitmap = BitmapFactory.decodeFile(_imageUri.toString(), bmOptions);
-        _zoomPinchImageView.setImageBitmap(photoReducedSizeBitmap);
-
     }
 
     //dodać sprawdzanie orientacji zdjecia po zrobieniu go
@@ -661,7 +719,5 @@ public class Editor extends AppCompatActivity {
         else{
             super.onRequestPermissionsResult(requestCode, permissions, grantResult);
         }
-
     }
-
 }

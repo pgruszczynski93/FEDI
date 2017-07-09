@@ -138,4 +138,11 @@ public class ZoomPinchImageView extends ImageView {
             e.printStackTrace();
         }
     }
+
+    public void SetBitmap(Bitmap bitmap){
+        _bitmap =  Bitmap.createScaledBitmap(bitmap, _imageW, _imageH, false);
+        invalidate();
+        requestLayout();
+    }
+
 }
