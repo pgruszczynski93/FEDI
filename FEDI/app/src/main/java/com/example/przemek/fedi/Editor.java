@@ -59,7 +59,18 @@ public class Editor extends AppCompatActivity {
     Bitmap[] _bitmapsOut;
     Allocation _inAllocation;
     Allocation[] _outAllocations;
-    ScriptC_saturation _script;
+
+    //**************** przemyslec
+    ScriptC_brightness _rsBrightness;
+    ScriptC_saturation _rsSaturation;
+    ScriptC_bloom _rsBloom;
+    ScriptC_contrast _rsContrast;
+    ScriptC_grayscale_average _rsGSAverage;
+    ScriptC_grayscale_yuv _rsGSyuv;
+    ScriptC_invert _rsInvert;
+    ScriptC_sepia _rsSepia;
+    ScriptC_treshold _rsTreshold;
+    //**************************
     RenderScriptTask _currentTask;
 
     Bitmap _inputBitmap, _resultBitmap;
@@ -90,21 +101,56 @@ public class Editor extends AppCompatActivity {
 
 
     private class RenderScriptTask extends AsyncTask<Float, Void, Integer> {
-        Boolean issued = false;
+        Boolean _issued = false;
+        String _rsKernel;
+
+        public RenderScriptTask(String rsKernel){
+            _rsKernel = rsKernel;
+        }
 
         protected Integer doInBackground(Float... values) {
             int index = -1;
             if (!isCancelled()) {
-                issued = true;
+                _issued = true;
                 index = mCurrentBitmap;
 
-                // Set global variable in RS
-                _script.set_saturation_value(values[0]);
+                if(_rsKernel.equals("Jasność")){
+                    //CreateScript(_optionsLabel);
+                    _rsBrightness.set_brightness_value(values[0]);
+                    _rsBrightness.forEach_brightness(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Kontrast")){
+                    _rsContrast.set_contrast_value(values[0]);
+                    _rsContrast.forEach_contrast(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Nasycenie")){
+                    _rsSaturation.set_saturation_value(values[0]);
+                    _rsSaturation.forEach_saturation(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Rozmycie")){
+                    //dorobic
+                }
+                else if(_rsKernel.equals("Negatyw")){
+                    _rsInvert.forEach_invert(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Szarość - Średnia")){
+                    _rsGSAverage.forEach_grayscale_average(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Szarość - YUV")){
+                    _rsGSyuv.forEach_grayscale_yuv(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Bloom")){
+                    _rsBloom.set_brightTreshold(values[0]);
+                    _rsBloom.forEach_bloom_bright_pass(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Sepia")){
+                    _rsSepia.forEach_sepia(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Progowanie")){
+                    _rsTreshold.set_treshold_value(values[0]);
+                    _rsTreshold.forEach_treshold(_inAllocation, _outAllocations[index]);
+                }
 
-                // Invoke saturatio filter kernel
-                _script.forEach_saturation(_inAllocation, _outAllocations[index]);
-
-                // Copy to bitmap and invalidate image view
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
             }
@@ -113,7 +159,6 @@ public class Editor extends AppCompatActivity {
 
         void updateView(Integer result) {
             if (result != -1) {
-                // Request UI update
                 _zoomPinchImageView.SetBitmap(_bitmapsOut[result]);
             }
         }
@@ -123,7 +168,7 @@ public class Editor extends AppCompatActivity {
         }
 
         protected void onCancelled(Integer result) {
-            if (issued) {
+            if (_issued) {
                 updateView(result);
             }
         }
@@ -158,26 +203,52 @@ public class Editor extends AppCompatActivity {
         }
     };
 
-    private void createScript() {
-        // Initialize RS
+    void CreateScript(String rsKernel) {
         RenderScript rs = RenderScript.create(this);
 
-        // Allocate buffers
         _inAllocation = Allocation.createFromBitmap(rs, _inputBitmap);
         _outAllocations = new Allocation[NUM_BITMAPS];
         for (int i = 0; i < NUM_BITMAPS; ++i) {
             _outAllocations[i] = Allocation.createFromBitmap(rs, _bitmapsOut[i]);
         }
 
-        // Load script
-        _script = new ScriptC_saturation(rs);
+        if(rsKernel.equals("Jasność")){
+            _rsBrightness = new ScriptC_brightness(rs);
+        }
+        else if(rsKernel.equals("Kontrast")){
+            _rsContrast = new ScriptC_contrast(rs);
+        }
+        else if(rsKernel.equals("Nasycenie")){
+            _rsSaturation = new ScriptC_saturation(rs);
+        }
+        else if(rsKernel.equals("Rozmycie")){
+            //dorrobic
+        }
+        else if(rsKernel.equals("Negatyw")){
+            _rsInvert = new ScriptC_invert(rs);
+        }
+        else if(rsKernel.equals("Szarość - Średnia")){
+            _rsGSAverage = new ScriptC_grayscale_average(rs);
+        }
+        else if(rsKernel.equals("Szarość - YUV")){
+            _rsGSyuv = new ScriptC_grayscale_yuv(rs);
+        }
+        else if(rsKernel.equals("Bloom")){
+            _rsBloom = new ScriptC_bloom(rs);
+        }
+        else if(rsKernel.equals("Sepia")){
+            _rsSepia = new ScriptC_sepia(rs);
+        }
+        else if(rsKernel.equals("Progowanie")){
+            _rsTreshold = new ScriptC_treshold(rs);
+        }
     }
 
-    private void updateImage(final float f) {
+    void UpdateImage(final float f) {
         if (_currentTask != null) {
             _currentTask.cancel(false);
         }
-        _currentTask = new RenderScriptTask();
+        _currentTask = new RenderScriptTask(_optionsLabel);
         _currentTask.execute(f);
     }
 
@@ -198,9 +269,9 @@ public class Editor extends AppCompatActivity {
             long start = SystemClock.elapsedRealtime();
            // try{
 
+            CreateScript(_optionsLabel);
                 if(_optionsLabel.equals("Jasność")){
-                    //_coreOperation = new FediCore(_inputBitmap, _zoomPinchImageView);
-                    //_coreOperation.CreateRenderscript(getApplicationContext(), _optionsLabel);
+                    //CreateScript(_optionsLabel);
                 }
 //                else if(_optionsLabel.equals("Kontrast")){
 //                    ContrastEffect();
@@ -329,19 +400,49 @@ public class Editor extends AppCompatActivity {
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
             // TUTAJ WRZUCIC TAKZE WSZYSTKIE OPERACJE GRAFICZNE W MOMENCIE GDY SLIDER ZMIENIA WARTOSC
-            _valFromSlider = progress-100;
-           // _optSliderText.setText(_optionsLabel+" "+_valFromSlider);
-            //try{
-                if(_optionsLabel.equals("Nasycenie")){
-
+                if(_optionsLabel.equals("Jasność")){
+                    _valFromSlider = progress - 100;
                     float f = (((float)_valFromSlider)/100.0f);
-                    updateImage(f);
+                    UpdateImage(f);
                     _optSliderText.setText(_optionsLabel+" "+f);
                 }
-            //}
-            //catch(IOException e){
-              //  Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
-            //}
+                else if(_optionsLabel.equals("Kontrast")){
+                    _valFromSlider = progress - 100;
+                    float f = (((float)_valFromSlider)/100.0f);
+                    UpdateImage(f);
+                    _optSliderText.setText(_optionsLabel+" "+f);
+                }
+                else if(_optionsLabel.equals("Nasycenie")){
+                    _valFromSlider = progress;
+                    float f = (((float)_valFromSlider)/100.0f);
+                    UpdateImage(f);
+                    _optSliderText.setText(_optionsLabel+" "+f);
+                }
+                else if(_optionsLabel.equals("Rozmycie")){
+                    //BlurEffect();
+                }
+                else if(_optionsLabel.equals("Negatyw")){
+                   // InvertEffect();
+                }
+                else if(_optionsLabel.equals("Szarość - Średnia")){
+                    //GrayscaleAverageEffect();
+                }
+                else if(_optionsLabel.equals("Szarość - YUV")){
+                    //GrayscaleYUVEffect();
+                }
+                else if(_optionsLabel.equals("Bloom")){
+                    //BloomEffect();
+                }
+                else if(_optionsLabel.equals("Sepia")){
+                    //SepiaEffect();
+                }
+                else if(_optionsLabel.equals("Progowanie")){
+                    //TresholdEffect();
+                    _valFromSlider = progress/2;
+                    float f = (((float)_valFromSlider)/100.0f);
+                    UpdateImage(f);
+                    _optSliderText.setText(_optionsLabel+" "+f);
+                }
         }
 
         @Override
@@ -427,6 +528,7 @@ public class Editor extends AppCompatActivity {
     }
 
     void InitRenderScriptOps(){
+
         try{
             _inputBitmap = GetBitmapFromUri(_imageUri);
         }
@@ -446,12 +548,15 @@ public class Editor extends AppCompatActivity {
                 .load(stream.toByteArray())
                 .asBitmap()
                 .diskCacheStrategy( DiskCacheStrategy.NONE )
-                .skipMemoryCache( true )
+                .skipMemoryCache( false )
                 .into(_zoomPinchImageView);
+
+
+//        _zoomPinchImageView.setImageBitmap(_bitmapsOut[mCurrentBitmap]);
         mCurrentBitmap += (mCurrentBitmap + 1) % NUM_BITMAPS;
 
-        createScript();
-        updateImage(0.0f);
+
+//        CreateScript();
     }
 
     void SaveBitmap(Bitmap bmp){
