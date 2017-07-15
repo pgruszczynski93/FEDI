@@ -50,11 +50,11 @@ import java.io.IOException;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 11, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
+    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 12, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
     final String[] _filtersValues = {"Negatyw", "Szarość - Średnia", "Szarość - YUV", "Rozmycie", "Bloom",
-            "Sepia", "Progowanie", "Atmosfera", "Ogień", "F1", "F1"};
+            "Sepia", "Progowanie", "Atmosfera", "Ogień", "Lód", "Woda", "Ziemia"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
 
@@ -83,6 +83,9 @@ public class Editor extends AppCompatActivity {
     ScriptC_kelvin_temperature _rsKelvinTemp;
     ScriptC_atmosphere_filter _rsAtmosphere;
     ScriptC_fire_filter _rsFire;
+    ScriptC_ice_filter _rsIce;
+    ScriptC_water_filter _rsWater;
+    ScriptC_earth_filter _rsEarth;
     //**************************
     RenderScriptTask _currentTask;
 
@@ -200,6 +203,15 @@ public class Editor extends AppCompatActivity {
                 else if(_rsKernel.equals("Ogień")){
                     _rsFire.forEach_fire_filter(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Lód")){
+                    _rsIce.forEach_ice_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Woda")){
+                    _rsWater.forEach_water_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Ziemia")){
+                    _rsEarth.forEach_earth_filter(_inAllocation, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
             }
@@ -278,6 +290,9 @@ public class Editor extends AppCompatActivity {
         _rsKelvinTemp = new ScriptC_kelvin_temperature(rs);
         _rsAtmosphere = new ScriptC_atmosphere_filter(rs);
         _rsFire = new ScriptC_fire_filter(rs);
+        _rsIce = new ScriptC_ice_filter(rs);
+        _rsWater = new ScriptC_water_filter(rs);
+        _rsEarth = new ScriptC_earth_filter(rs);
     }
 
     void UpdateImage(final float f) {
@@ -353,7 +368,7 @@ public class Editor extends AppCompatActivity {
                     UpdateImage(0.0f);
                 }
                 else if(_optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie") || _optionsLabel.equals("Atmosfera") ||
-                        _optionsLabel.equals("Ogień")){
+                        _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") || _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia")){
 
                     UpdateImage(0.0f);
                 }
