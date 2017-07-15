@@ -4,11 +4,11 @@
 
 const float3 yuv_vector = {0.299f, 0.587f, 0.114f};
 
-static inline float ClampFloat(const float pixel, const float pixel_min, const float pixel_max) {
-    if (pixel < pixel_max) {
-        return ((pixel > pixel_min) ? pixel : pixel_min);
+static inline float ClampFloat(const float value, const float value_min, const float value_max) {
+    if (value < value_max) {
+        return ((value > value_min) ? value : value_min);
     }
-    return pixel_max;
+    return value_max;
 }
 
 static inline float3 Clamp01Float3(const float3 pixel){

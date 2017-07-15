@@ -4,11 +4,13 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-uchar4 __attribute__((kernel)) invert(uchar4 pixel_in, int32_t x, int32_t y){
+float temperature_value;
+
+uchar4 __attribute__((kernel)) simple_temperature(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pixel = rsUnpackColor8888(pixel_in);
     float3 rgb_pix = full_pixel.rgb;
-    rgb_pix.r = 1.0f - rgb_pix.r;
-    rgb_pix.g = 1.0f - rgb_pix.g;
-    rgb_pix.b = 1.0f - rgb_pix.b;
+    rgb_pix.r += temperature_value;
+    rgb_pix.b -= temperature_value;
+    rgb_pix = Clamp01Float3(rgb_pix);
     return rsPackColorTo8888(rgb_pix);
 }

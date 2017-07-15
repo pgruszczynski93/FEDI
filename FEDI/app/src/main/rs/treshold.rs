@@ -7,11 +7,9 @@
 float treshold_value;
 
 uchar4 __attribute__((kernel)) treshold(uchar4 pixel_in, uint32_t x, uint32_t y){
-    uchar4 pixel_out;
     float4 unpacked_pixel = rsUnpackColor8888(pixel_in);
     float grayscale_value = dot(unpacked_pixel.rgb, yuv_vector);
     grayscale_value = (grayscale_value > treshold_value) ? 1 : 0;
     float3 out = {grayscale_value,grayscale_value,grayscale_value};
-    pixel_out = rsPackColorTo8888(out);
-    return pixel_out;
+    return rsPackColorTo8888(out);
 }
