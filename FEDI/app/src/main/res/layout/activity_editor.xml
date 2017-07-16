@@ -95,6 +95,13 @@
                 android:text="Dopasuj" />
 
             <Button
+                android:id="@+id/whiteBalanceButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="ShowWhiteBalance"
+                android:text="Balans Bieli" />
+
+            <Button
                 android:id="@+id/detailsButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -102,11 +109,27 @@
                 android:text="Szczegóły" />
 
             <Button
-                android:id="@+id/cropButton"
+                android:id="@+id/filtersButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="CropImage"
-                android:text="Kadruj" />
+                android:onClick="ShowFilters"
+                android:text="Filtry: Ogólne" />
+
+            <Button
+                android:id="@+id/naturalFiltersButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="ShowNaturalFilters"
+                android:text="Filtry: Natura" />
+
+            <Button
+                android:id="@+id/grayscalesButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="ShowGrayscaleFilters"
+                android:text="Filtry: Szarości" />
 
             <Button
                 android:id="@+id/rotateButton"
@@ -117,11 +140,11 @@
                 android:text="Obróć" />
 
             <Button
-                android:id="@+id/filtersButton"
+                android:id="@+id/cropButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="ShowFilters"
-                android:text="Filtry" />
+                android:onClick="CropImage"
+                android:text="Kadruj" />
 
             <Button
                 android:id="@+id/histogramButton"
@@ -130,12 +153,6 @@
                 android:onClick="ShowHistogram"
                 android:text="Histogram" />
 
-            <Button
-                android:id="@+id/whiteBalanceButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:onClick="ShowWhiteBalance"
-                android:text="Balans Bieli" />
         </LinearLayout>
         </HorizontalScrollView>
 

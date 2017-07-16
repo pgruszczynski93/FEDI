@@ -50,13 +50,15 @@ import java.io.IOException;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 12, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3;
+    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
+            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
-    final String[] _filtersValues = {"Negatyw", "Szarość - Średnia", "Szarość - YUV", "Rozmycie", "Bloom",
-            "Sepia", "Progowanie", "Atmosfera", "Ogień", "Lód", "Woda", "Ziemia"};
+    final String[] _filtersValues = {"Negatyw", "Rozmycie", "Bloom", "Sepia", "Progowanie", "Czarne światło","F1","F1","F1","F1","F1","F1","F1","F1","F1"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
+    final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "X-Szarości"};
+    final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
 
 //    FediCore _coreOperation;
     final int NUM_BITMAPS = 2;
@@ -71,6 +73,7 @@ public class Editor extends AppCompatActivity {
     ScriptC_contrast _rsContrast;
     ScriptC_grayscale_average _rsGSAverage;
     ScriptC_grayscale_yuv _rsGSyuv;
+    ScriptC_grayscale_desaturation _rsGSDestaturation;
     ScriptC_invert _rsInvert;
     ScriptC_sepia _rsSepia;
     ScriptC_treshold _rsTreshold;
@@ -86,6 +89,7 @@ public class Editor extends AppCompatActivity {
     ScriptC_ice_filter _rsIce;
     ScriptC_water_filter _rsWater;
     ScriptC_earth_filter _rsEarth;
+    ScriptC_blacklight_filter _rsBlackLight;
     //**************************
     RenderScriptTask _currentTask;
 
@@ -93,7 +97,8 @@ public class Editor extends AppCompatActivity {
 
 
     //tablice: dopasowań, detali, filtrów, balansu bieli
-    Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList;
+    Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList,
+    _natururalFiltButtonList, _grayScaleButtonList;
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
     String _currBottomButton, _prevBottomButton = "", _optionsLabel;
 
@@ -151,10 +156,10 @@ public class Editor extends AppCompatActivity {
                 else if(_rsKernel.equals("Negatyw")){
                     _rsInvert.forEach_invert(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("Szarość - Średnia")){
+                else if(_rsKernel.equals("Średnia")){
                     _rsGSAverage.forEach_grayscale_average(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("Szarość - YUV")){
+                else if(_rsKernel.equals("Luminancja")){
                     _rsGSyuv.forEach_grayscale_yuv(_inAllocation, _outAllocations[index]);
                 }
                 else if(_rsKernel.equals("Bloom")){
@@ -211,6 +216,13 @@ public class Editor extends AppCompatActivity {
                 }
                 else if(_rsKernel.equals("Ziemia")){
                     _rsEarth.forEach_earth_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Czarne światło")){
+                    _rsBlackLight.set_filter_strenght(values[0]);
+                    _rsBlackLight.forEach_blacklight_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Desaturacja")){
+                    _rsGSDestaturation.forEach_grayscale_desaturation(_inAllocation, _outAllocations[index]);
                 }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
@@ -278,6 +290,7 @@ public class Editor extends AppCompatActivity {
         _rsInvert = new ScriptC_invert(rs);
         _rsGSAverage = new ScriptC_grayscale_average(rs);
         _rsGSyuv = new ScriptC_grayscale_yuv(rs);
+        _rsGSDestaturation =  new ScriptC_grayscale_desaturation(rs);
         _rsBloom = new ScriptC_bloom(rs);
         _rsSepia = new ScriptC_sepia(rs);
         _rsTreshold = new ScriptC_treshold(rs);
@@ -293,6 +306,7 @@ public class Editor extends AppCompatActivity {
         _rsIce = new ScriptC_ice_filter(rs);
         _rsWater = new ScriptC_water_filter(rs);
         _rsEarth = new ScriptC_earth_filter(rs);
+        _rsBlackLight = new ScriptC_blacklight_filter(rs);
     }
 
     void UpdateImage(final float f) {
@@ -375,6 +389,11 @@ public class Editor extends AppCompatActivity {
                 else if(_optionsLabel.equals("Temperatura - Kelvin")){
                     UpdateImage(8000.0f);
                 }
+                else if(_optionsLabel.equals("Czarne światło")){
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(6);
+                    UpdateImage(1.0f);
+                }
             }
             //catch (IOException e){
               //  Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
@@ -453,6 +472,9 @@ public class Editor extends AppCompatActivity {
                 }
                 else if(_optionsLabel.equals("Temperatura - Kelvin")){
                     value = progress*200;
+                }
+                else if(_optionsLabel.equals("Czarne światło")){
+                    value = progress;
                 }
                 UpdateImage(value);
                 _optSliderText.setText(_optionsLabel+" "+value);
@@ -718,38 +740,53 @@ public class Editor extends AppCompatActivity {
         _optSlider.setOnSeekBarChangeListener(sbValueChange);
     }
 
-    void ShowAdjustments(View v){
+    public void ShowAdjustments(View v){
         _currBottomButton = "adjustments";
         _adjustmentsButtonsList = new Button[ADJUSTMENT_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_adjustmentValues, _adjustmentsButtonsList ,ADJUSTMENT_COUNT);
     }
 
-    void ShowDetails(View v){
+    public void ShowDetails(View v){
         _currBottomButton = "details";
         _detailsButtonList = new Button[DETAILS_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_detailsValues, _detailsButtonList, DETAILS_COUNT);
     }
-    void ShowFilters(View v){
+    public void ShowFilters(View v){
         _currBottomButton = "filters";
         _filtersButtonList = new Button[FILTERS_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_filtersValues, _filtersButtonList, FILTERS_COUNT);
     }
-    void ShowWhiteBalance(View v){
+    public void ShowWhiteBalance(View v){
         _currBottomButton = "whitebalance";
         _wbButtonList = new Button[WHITE_BALANCE_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_whiteBalanceValues, _wbButtonList, WHITE_BALANCE_COUNT);
     }
 
-    void ShowRotation(View v){
+    public void ShowRotation(View v){
         _currBottomButton = "rotation";
         _rotationButtonList = new Button[ROTATIONS_COUNT];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(_rotationValues, _rotationButtonList, ROTATIONS_COUNT);
     }
+
+    public void ShowNaturalFilters(View v){
+        _currBottomButton = "naturalfilters";
+        _natururalFiltButtonList = new Button[NATURALFILTERS_COUNT];
+        SetOptionsVisibility(_currBottomButton);
+        FillOptionsBar(_naturalFiltersValues, _natururalFiltButtonList, NATURALFILTERS_COUNT);
+    }
+
+    public void ShowGrayscaleFilters(View v){
+        _currBottomButton = "grayscale";
+        _grayScaleButtonList = new Button[GRAYSCALE_COUNT];
+        SetOptionsVisibility(_currBottomButton);
+        FillOptionsBar(_grayscalesValues, _grayScaleButtonList, GRAYSCALE_COUNT);
+    }
+
 
     void ShowHistogram(View v){
         Toast.makeText(this, "dupa", Toast.LENGTH_SHORT).show();
