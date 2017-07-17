@@ -50,14 +50,14 @@ import java.io.IOException;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 6, DETAILS_COUNT = 2, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
+    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 2, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
-    final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Prześwietlenia", "Cienie", "Temperatura"};
+    final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
-    final String[] _filtersValues = {"Negatyw", "Rozmycie", "Bloom", "Sepia", "Progowanie", "Czarne światło","F1","F1","F1","F1","F1","F1","F1","F1","F1"};
+    final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma","Solaryzacja","F1","F1","F1","F1","F1","F1"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
-    final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "X-Szarości"};
+    final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
     final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
 
 //    FediCore _coreOperation;
@@ -74,11 +74,15 @@ public class Editor extends AppCompatActivity {
     ScriptC_grayscale_average _rsGSAverage;
     ScriptC_grayscale_yuv _rsGSyuv;
     ScriptC_grayscale_desaturation _rsGSDestaturation;
+    ScriptC_grayscale_decomposition _rsGSDecomposition;
+    ScriptC_grayscale_onechannel _rsGSOnechannel;
+    ScriptC_grayscale_xlevels _rsGSlevels;
     ScriptC_invert _rsInvert;
     ScriptC_sepia _rsSepia;
     ScriptC_treshold _rsTreshold;
     ScriptIntrinsicBlur _rsBlur;
     ScriptIntrinsicBlend _rsBlend;
+    ScriptC_color_shift _rsColorShift;
     ScriptC_bloom _rsBloom;
     ScriptC_tint _rsTint;
     ScriptC_simple_temperature _rsSimpleTemp;
@@ -90,6 +94,8 @@ public class Editor extends AppCompatActivity {
     ScriptC_water_filter _rsWater;
     ScriptC_earth_filter _rsEarth;
     ScriptC_blacklight_filter _rsBlackLight;
+    ScriptC_gamma_correction _rsGammaCor;
+    ScriptC_solarization _rsSolarization;
     //**************************
     RenderScriptTask _currentTask;
 
@@ -224,6 +230,30 @@ public class Editor extends AppCompatActivity {
                 else if(_rsKernel.equals("Desaturacja")){
                     _rsGSDestaturation.forEach_grayscale_desaturation(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Dekompozycja")){
+                    _rsGSDecomposition.set_decomposition_type(values[0].intValue());
+                    _rsGSDecomposition.forEach_grayscale_desaturation(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("1-Kanał")){
+                    _rsGSOnechannel.set_channel(values[0].intValue());
+                    _rsGSOnechannel.forEach_grayscale_desaturation(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("N-Szarości")){
+                    _rsGSlevels.set_levels(values[0].intValue());
+                    _rsGSlevels.forEach_grayscale_xlevels(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Zamiana kanału")){
+                    _rsColorShift.set_shift(values[0].intValue());
+                    _rsColorShift.forEach_color_shift(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Gamma")){
+                    _rsGammaCor.set_gamma(values[0]);
+                    _rsGammaCor.forEach_color_shift(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Solaryzacja")){
+                    _rsSolarization.set_treshold(values[0]);
+                    _rsSolarization.forEach_solarization(_inAllocation, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
             }
@@ -291,6 +321,9 @@ public class Editor extends AppCompatActivity {
         _rsGSAverage = new ScriptC_grayscale_average(rs);
         _rsGSyuv = new ScriptC_grayscale_yuv(rs);
         _rsGSDestaturation =  new ScriptC_grayscale_desaturation(rs);
+        _rsGSDecomposition = new ScriptC_grayscale_decomposition(rs);
+        _rsGSOnechannel = new ScriptC_grayscale_onechannel(rs);
+        _rsGSlevels = new ScriptC_grayscale_xlevels(rs);
         _rsBloom = new ScriptC_bloom(rs);
         _rsSepia = new ScriptC_sepia(rs);
         _rsTreshold = new ScriptC_treshold(rs);
@@ -307,6 +340,9 @@ public class Editor extends AppCompatActivity {
         _rsWater = new ScriptC_water_filter(rs);
         _rsEarth = new ScriptC_earth_filter(rs);
         _rsBlackLight = new ScriptC_blacklight_filter(rs);
+        _rsColorShift = new ScriptC_color_shift(rs);
+        _rsGammaCor = new ScriptC_gamma_correction(rs);
+        _rsSolarization = new ScriptC_solarization(rs);
     }
 
     void UpdateImage(final float f) {
@@ -394,6 +430,40 @@ public class Editor extends AppCompatActivity {
                     _optSlider.setMax(6);
                     UpdateImage(1.0f);
                 }
+                else if(_optionsLabel.equals("Dekompozycja")) {
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(1);
+                    UpdateImage(0.0f);
+                    //UpdateImage(0.0f);
+                    //_optSlider.setMax(200); // tymczasowo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                }
+                else if(_optionsLabel.equals("1-Kanał")){
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(2);
+                    UpdateImage(0.0f);
+                //UpdateImage(0.0f);
+                //_optSlider.setMax(200); // tymczasowo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                }
+                else if(_optionsLabel.equals("N-Szarości")){
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(2);
+                    UpdateImage(0.0f);
+                }
+                else if(_optionsLabel.equals("Zamiana kanału")){
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(2);
+                    UpdateImage(0.0f);
+                }
+                else if(_optionsLabel.equals("Gamma")){
+                    _optSlider.setProgress(100);
+                    _optSlider.setMax(798);
+                    UpdateImage(1.0f);
+                }
+                else if(_optionsLabel.equals("Solaryzacja")){
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(200);
+                    UpdateImage(0.0f);
+                }
             }
             //catch (IOException e){
               //  Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
@@ -475,6 +545,26 @@ public class Editor extends AppCompatActivity {
                 }
                 else if(_optionsLabel.equals("Czarne światło")){
                     value = progress;
+                }
+                else if(_optionsLabel.equals("Dekompozycja")){
+                    value = progress;
+                }
+                else if(_optionsLabel.equals("1-Kanał")){
+                    value = progress;
+                }
+                else if(_optionsLabel.equals("N-Szarości")){
+                    value = progress;
+                }
+                else if(_optionsLabel.equals("Zamiana kanału")){
+                    value = progress;
+                }
+                else if(_optionsLabel.equals("Gamma")){
+                    value = ((float)(progress+1)/100.0f);
+                }
+                else if(_optionsLabel.equals("Solaryzacja")){
+                    // zmienic na wartosci 1-128
+                    _valFromSlider = progress - 100;
+                    value = (((float)_valFromSlider)/100.0f);
                 }
                 UpdateImage(value);
                 _optSliderText.setText(_optionsLabel+" "+value);
