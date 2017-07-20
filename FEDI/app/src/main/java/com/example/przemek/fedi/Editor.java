@@ -53,8 +53,8 @@ public class Editor extends AppCompatActivity {
     final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 2, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
-    final String[] _detailsValues = {"Struktura", "Wyostrzanie"};
-    final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma","Solaryzacja","F1","F1","F1","F1","F1","F1"};
+    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie"};
+    final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma","Solaryzacja","Kropkowanie","TEST","F1","F1","F1","F1"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
@@ -96,6 +96,9 @@ public class Editor extends AppCompatActivity {
     ScriptC_blacklight_filter _rsBlackLight;
     ScriptC_gamma_correction _rsGammaCor;
     ScriptC_solarization _rsSolarization;
+    ScriptC_sharp _rsSharp;
+    ScriptC_simple_dithering _rsDithering;
+    ScriptC_brick _rsBrick;
     //**************************
     RenderScriptTask _currentTask;
 
@@ -254,6 +257,20 @@ public class Editor extends AppCompatActivity {
                     _rsSolarization.set_treshold(values[0]);
                     _rsSolarization.forEach_solarization(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Proste wyostrzanie")){
+                    _rsSharp.set_img_in(_inAllocation);
+                    _rsSharp.set_width(_inputBitmap.getWidth());
+                    _rsSharp.set_height(_inputBitmap.getHeight());
+                    _rsSharp.set_intensity(values[0].intValue());
+                    _rsSharp.forEach_sharp(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Kropkowanie")){
+                    _rsDithering.forEach_simple_dithering(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("TEST")){
+                    _rsBrick.set_treshold(values[0]);
+                    _rsBrick.forEach_brick(_inAllocation, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
             }
@@ -343,6 +360,9 @@ public class Editor extends AppCompatActivity {
         _rsColorShift = new ScriptC_color_shift(rs);
         _rsGammaCor = new ScriptC_gamma_correction(rs);
         _rsSolarization = new ScriptC_solarization(rs);
+        _rsSharp = new ScriptC_sharp(rs);
+        _rsDithering = new ScriptC_simple_dithering(rs);
+        _rsBrick = new ScriptC_brick(rs);
     }
 
     void UpdateImage(final float f) {
@@ -418,7 +438,8 @@ public class Editor extends AppCompatActivity {
                     UpdateImage(0.0f);
                 }
                 else if(_optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie") || _optionsLabel.equals("Atmosfera") ||
-                        _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") || _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia")){
+                        _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") || _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia") ||
+                        _optionsLabel.equals("Kropkowanie")){
 
                     UpdateImage(0.0f);
                 }
@@ -463,6 +484,20 @@ public class Editor extends AppCompatActivity {
                     _optSlider.setProgress(0);
                     _optSlider.setMax(200);
                     UpdateImage(0.0f);
+                }
+                else if(_optionsLabel.equals("Proste wyostrzanie")){
+                   // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(2);
+                    //krawedzie dla 0
+                    UpdateImage(0);
+                }
+                else if(_optionsLabel.equals("TEST")){
+                    // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(100);
+                    //krawedzie dla 0
+                    UpdateImage(0);
                 }
             }
             //catch (IOException e){
@@ -565,6 +600,12 @@ public class Editor extends AppCompatActivity {
                     // zmienic na wartosci 1-128
                     _valFromSlider = progress - 100;
                     value = (((float)_valFromSlider)/100.0f);
+                }
+                else if(_optionsLabel.equals("Proste wyostrzanie")){
+                    value = progress;
+                }
+                else if(_optionsLabel.equals("TEST")){
+                    value = progress/100.0f;
                 }
                 UpdateImage(value);
                 _optSliderText.setText(_optionsLabel+" "+value);
