@@ -54,7 +54,8 @@ public class Editor extends AppCompatActivity {
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Proste wyostrzanie"};
-    final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma","Solaryzacja","Kropkowanie","TEST","F1","F1","F1","F1"};
+    final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
+            "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna","F1","F1"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
@@ -98,7 +99,9 @@ public class Editor extends AppCompatActivity {
     ScriptC_solarization _rsSolarization;
     ScriptC_sharp _rsSharp;
     ScriptC_simple_dithering _rsDithering;
-    ScriptC_brick _rsBrick;
+    ScriptC_quantization _rsQuantization;
+    ScriptC_mosaic_filter _rsMosaic;
+    ScriptC_oilpainting_filter _rsOilPaint;
     //**************************
     RenderScriptTask _currentTask;
 
@@ -267,9 +270,21 @@ public class Editor extends AppCompatActivity {
                 else if(_rsKernel.equals("Kropkowanie")){
                     _rsDithering.forEach_simple_dithering(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("TEST")){
-                    _rsBrick.set_treshold(values[0]);
-                    _rsBrick.forEach_brick(_inAllocation, _outAllocations[index]);
+                else if(_rsKernel.equals("Kwantyzacja")){
+                    _rsQuantization.set_treshold(values[0].intValue()+1);
+                    _rsQuantization.forEach_quantization(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Mozaika")){
+                    _rsMosaic.set_img_in(_inAllocation);
+                    _rsMosaic.set_size(values[0].intValue()+1);
+                    _rsMosaic.forEach_mosaic(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Farba olejna")){
+                    _rsOilPaint.set_img_in(_inAllocation);
+                    _rsOilPaint.set_width(_inputBitmap.getWidth());
+                    _rsOilPaint.set_height(_inputBitmap.getHeight());
+                    _rsOilPaint.set_size(values[0].intValue()+1);
+                    _rsOilPaint.forEach_oilpainting_filter(_inAllocation, _outAllocations[index]);
                 }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
@@ -362,7 +377,9 @@ public class Editor extends AppCompatActivity {
         _rsSolarization = new ScriptC_solarization(rs);
         _rsSharp = new ScriptC_sharp(rs);
         _rsDithering = new ScriptC_simple_dithering(rs);
-        _rsBrick = new ScriptC_brick(rs);
+        _rsQuantization = new ScriptC_quantization(rs);
+        _rsMosaic = new ScriptC_mosaic_filter(rs);
+        _rsOilPaint = new ScriptC_oilpainting_filter(rs);
     }
 
     void UpdateImage(final float f) {
@@ -492,12 +509,26 @@ public class Editor extends AppCompatActivity {
                     //krawedzie dla 0
                     UpdateImage(0);
                 }
-                else if(_optionsLabel.equals("TEST")){
+                else if(_optionsLabel.equals("Kwantyzacja")){
+                    // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(31);
+                    //krawedzie dla 0
+                    UpdateImage(1);
+                }
+                else if(_optionsLabel.equals("Mozaika")){
                     // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
                     _optSlider.setProgress(0);
                     _optSlider.setMax(100);
                     //krawedzie dla 0
-                    UpdateImage(0);
+                    UpdateImage(1);
+                }
+                else if(_optionsLabel.equals("Farba olejna")){
+                    // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
+                    _optSlider.setProgress(0);
+                    _optSlider.setMax(50);
+                    //krawedzie dla 0
+                    UpdateImage(1);
                 }
             }
             //catch (IOException e){
@@ -604,8 +635,14 @@ public class Editor extends AppCompatActivity {
                 else if(_optionsLabel.equals("Proste wyostrzanie")){
                     value = progress;
                 }
-                else if(_optionsLabel.equals("TEST")){
-                    value = progress/100.0f;
+                else if(_optionsLabel.equals("Kwantyzacja")){
+                    value = progress+1;
+                }
+                else if(_optionsLabel.equals("Mozaika")){
+                    value = progress+1;
+                }
+                else if(_optionsLabel.equals("Farba olejna")){
+                    value = progress+1;
                 }
                 UpdateImage(value);
                 _optSliderText.setText(_optionsLabel+" "+value);
