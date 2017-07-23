@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /***
  * Klasa aktywności Edytora zdjęć.
@@ -64,7 +65,7 @@ public class Editor extends AppCompatActivity {
 
 //    FediCore _coreOperation;
     final int NUM_BITMAPS = 2;
-    int mCurrentBitmap = 0;
+    int _currentBitmap = 0;
     Bitmap[] _bitmapsOut;
     Allocation _inAllocation;
     Allocation[] _outAllocations;
@@ -126,14 +127,12 @@ public class Editor extends AppCompatActivity {
     // widoki zdjecia
     //ImageView _imageView;
     public ZoomPinchImageView _zoomPinchImageView;
-
     Intent _launchedIntent;
 
     Uri _imageUri = null;
-
     boolean _intentHasExtras;
-    //Bitmap _imageBitmap;
 
+    ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
 
     private class RenderScriptTask extends AsyncTask<Float, Void, Integer> {
         Boolean _issued = false;
@@ -147,7 +146,7 @@ public class Editor extends AppCompatActivity {
             int index = -1;
             if (!isCancelled()) {
                 _issued = true;
-                index = mCurrentBitmap;
+                index = _currentBitmap;
 
                 if(_rsKernel.equals("Jasność")){
                     _rsBrightness.set_brightness_value(values[0]);
@@ -301,7 +300,9 @@ public class Editor extends AppCompatActivity {
                     _rsMist.forEach_mist_filter(_inAllocation, _outAllocations[index]);
                 }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
-                mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
+                _resultBitmap = _bitmapsOut[index];
+                _currentBitmap = (_currentBitmap + 1) % NUM_BITMAPS;
+
             }
             return index;
         }
@@ -425,56 +426,56 @@ public class Editor extends AppCompatActivity {
             InitRenderScriptOps();
             CreateScript();
 
-                if(_optionsLabel.equals("Jasność") || _optionsLabel.equals("Kontrast") || _optionsLabel.equals("Odcień")||
-                        _optionsLabel.equals("Temperatura") || _optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie") ||
-                        _optionsLabel.equals("Atmosfera") || _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") ||
-                        _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia")){
+            if(_optionsLabel.equals("Jasność") || _optionsLabel.equals("Kontrast") || _optionsLabel.equals("Odcień")||
+                    _optionsLabel.equals("Temperatura") || _optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie") ||
+                    _optionsLabel.equals("Atmosfera") || _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") ||
+                    _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia")){
 
-                    SetOptionSlider(100,200,0.0f);
-                }
-                else if(_optionsLabel.equals("1-Kanał") || _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") ||
-                        _optionsLabel.equals("Proste wyostrzanie")){
-                    SetOptionSlider(0,2,0.0f);
-                }
-                else if(_optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom")){
-                    SetOptionSlider(0,24,1.0f);
-                }
-                else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja")){
-                    SetOptionSlider(0,100,0.0f);
-                }
-                else if(_optionsLabel.equals("Nasycenie")){
-                    SetOptionSlider(100,200,1.0f);
-                }
-                else if(_optionsLabel.equals("Progowanie")){
-                    SetOptionSlider(50,100,0.5f);
-                }
-                else if(_optionsLabel.equals("Temperatura - Kelvin")){
-                    UpdateImage(8000.0f);
-                }
-                else if(_optionsLabel.equals("Czarne światło")){
-                    SetOptionSlider(0,6,1.0f);
-                }
-                else if(_optionsLabel.equals("Dekompozycja")) {
-                    SetOptionSlider(0,1,0.0f);
-                }
-                else if(_optionsLabel.equals("Gamma")){
-                    SetOptionSlider(100,798,1.0f);
-                }
-                else if(_optionsLabel.equals("Kwantyzacja")){
-                    SetOptionSlider(0,31,1.0f);
-                }
-                else if(_optionsLabel.equals("Mozaika")){
-                    SetOptionSlider(0,100,1.0f);
-                }
-                else if(_optionsLabel.equals("Farba olejna")){
-                    SetOptionSlider(0,50,1.0f);
-                }
-                else{
-                    UpdateImage(0.0f);
-                    _sliderOptLayout.setVisibility(View.INVISIBLE);
-                }
+                SetOptionSlider(100,200,0.0f);
             }
-        };
+            else if(_optionsLabel.equals("1-Kanał") || _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") ||
+                    _optionsLabel.equals("Proste wyostrzanie")){
+                SetOptionSlider(0,2,0.0f);
+            }
+            else if(_optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom")){
+                SetOptionSlider(0,24,1.0f);
+            }
+            else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja")){
+                SetOptionSlider(0,100,0.0f);
+            }
+            else if(_optionsLabel.equals("Nasycenie")){
+                SetOptionSlider(100,200,1.0f);
+            }
+            else if(_optionsLabel.equals("Progowanie")){
+                SetOptionSlider(50,100,0.5f);
+            }
+            else if(_optionsLabel.equals("Temperatura - Kelvin")){
+                UpdateImage(8000.0f);
+            }
+            else if(_optionsLabel.equals("Czarne światło")){
+                SetOptionSlider(0,6,1.0f);
+            }
+            else if(_optionsLabel.equals("Dekompozycja")) {
+                SetOptionSlider(0,1,0.0f);
+            }
+            else if(_optionsLabel.equals("Gamma")){
+                SetOptionSlider(100,798,1.0f);
+            }
+            else if(_optionsLabel.equals("Kwantyzacja")){
+                SetOptionSlider(0,31,1.0f);
+            }
+            else if(_optionsLabel.equals("Mozaika")){
+                SetOptionSlider(0,100,1.0f);
+            }
+            else if(_optionsLabel.equals("Farba olejna")){
+                SetOptionSlider(0,50,1.0f);
+            }
+            else{
+                UpdateImage(0.0f);
+                _sliderOptLayout.setVisibility(View.INVISIBLE);
+            }
+        }
+    };
 
     public Uri GetImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -525,7 +526,23 @@ public class Editor extends AppCompatActivity {
         public void onStartTrackingTouch(SeekBar seekBar) {}
 
         @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {}
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            ///tymczasowo -----------------------------------------------
+            _history.add(_resultBitmap);
+
+            Toast.makeText(getApplicationContext(),"Historia "+_history.size(), Toast.LENGTH_LONG).show();
+//            if(_history.size() > 0){
+//                _zoomPinchImageView.SetBitmap(_history.get(_history.size() - 1));
+//                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                _history.get(_history.size() - 1).compress(Bitmap.CompressFormat.JPEG, 100, stream);
+//                Glide.with(getApplicationContext())
+//                        .load(stream.toByteArray())
+//                        .asBitmap()
+//                        .diskCacheStrategy( DiskCacheStrategy.NONE )
+//                        .skipMemoryCache( false )
+//                        .into(_zoomPinchImageView);
+//            }
+        }
     };
 
     /***
@@ -615,7 +632,7 @@ public class Editor extends AppCompatActivity {
         }
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        _bitmapsOut[mCurrentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        _bitmapsOut[_currentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
         Glide.with(this)
                 .load(stream.toByteArray())
                 .asBitmap()
@@ -624,8 +641,8 @@ public class Editor extends AppCompatActivity {
                 .into(_zoomPinchImageView);
 
 
-//        _zoomPinchImageView.SetBitmap(_bitmapsOut[mCurrentBitmap]);
-        mCurrentBitmap += (mCurrentBitmap + 1) % NUM_BITMAPS;
+//        _zoomPinchImageView.SetBitmap(_bitmapsOut[_currentBitmap]);
+        _currentBitmap += (_currentBitmap + 1) % NUM_BITMAPS;
 
     }
 
@@ -681,6 +698,7 @@ public class Editor extends AppCompatActivity {
      * Metoda odpowiedzialna za uruchomienie intencji eksploratora plików w celu wybrania zdjęcia to załadowania, do widoku ImageView
      */
     void OpenImageBrowser(){
+        _history.clear();
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
