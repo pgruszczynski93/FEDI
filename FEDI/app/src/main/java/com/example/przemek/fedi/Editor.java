@@ -117,7 +117,6 @@ public class Editor extends AppCompatActivity {
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
     String _currBottomButton, _prevBottomButton = "", _optionsLabel;
 
-    int _valFromSlider;
     LinearLayout _optionsLayout, _sliderOptLayout;
     TextView _optSliderText;
     SeekBar _optSlider;
@@ -440,14 +439,14 @@ public class Editor extends AppCompatActivity {
                 else if(_optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom")){
                     SetOptionSlider(0,24,1.0f);
                 }
-                else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie")){
+                else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja")){
                     SetOptionSlider(0,100,0.0f);
                 }
                 else if(_optionsLabel.equals("Nasycenie")){
                     SetOptionSlider(100,200,1.0f);
                 }
                 else if(_optionsLabel.equals("Progowanie")){
-                    SetOptionSlider(100,200,0.5f);
+                    SetOptionSlider(50,100,0.5f);
                 }
                 else if(_optionsLabel.equals("Temperatura - Kelvin")){
                     UpdateImage(8000.0f);
@@ -460,9 +459,6 @@ public class Editor extends AppCompatActivity {
                 }
                 else if(_optionsLabel.equals("Gamma")){
                     SetOptionSlider(100,798,1.0f);
-                }
-                else if(_optionsLabel.equals("Solaryzacja")){
-                    SetOptionSlider(0,200,0.0f);
                 }
                 else if(_optionsLabel.equals("Kwantyzacja")){
                     SetOptionSlider(0,31,1.0f);
@@ -494,87 +490,32 @@ public class Editor extends AppCompatActivity {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
-            if(_optionsLabel.equals("Jasność")){
-                _valFromSlider = progress - 100;
-                value = (((float)_valFromSlider)/100.0f);
+            if(_optionsLabel.equals("Jasność") || _optionsLabel.equals("Kontrast")){
+                value = (((float)(progress - 100))/100.0f);
             }
-            else if(_optionsLabel.equals("Kontrast")){
-                _valFromSlider = progress - 100;
-                value = (((float)_valFromSlider)/100.0f);
+            else if(_optionsLabel.equals("Nasycenie") || _optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Progowanie") ||
+                    _optionsLabel.equals("Solaryzacja")){
+                value = (float)progress/100.0f;
             }
-            else if(_optionsLabel.equals("Nasycenie")){
-                _valFromSlider = progress;
-                value = (((float)_valFromSlider)/100.0f);
+            else if(_optionsLabel.equals("Kwantyzacja") || _optionsLabel.equals("Mozaika") || _optionsLabel.equals("Farba olejna") ||
+                _optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom")){
+                value = progress+1;
             }
-            else if(_optionsLabel.equals("Rozmycie")){
-                 _valFromSlider = progress;
-                 value = (((float)_valFromSlider)+1);
+            else if(_optionsLabel.equals("Czarne światło") || _optionsLabel.equals("Dekompozycja") || _optionsLabel.equals("1-Kanał") ||
+                    _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie")){
+                value = progress;
             }
-            else if(_optionsLabel.equals("Bloom")){
-                _valFromSlider = progress;
-                value = (((float)_valFromSlider)+1);
-                //_valFromSlider = progress-100;
-                //value = (((float)_valFromSlider)/100.0f);
-            }
-            else if(_optionsLabel.equals("Progowanie")){
-                _valFromSlider = progress/2;
-                value = (((float)_valFromSlider)/100.0f);
-            }
-            else if(_optionsLabel.equals("Odcień")){
-                _valFromSlider = (progress - 100)/2;
-                value = (((float)_valFromSlider)/100.0f);
-            }
-            else if(_optionsLabel.equals("Temperatura")){
-                _valFromSlider = (progress - 100)/2;
-                value = (((float)_valFromSlider)/100.0f);
+            else if(_optionsLabel.equals("Odcień") || _optionsLabel.equals("Temperatura")){
+                value = (((float)((progress - 100)>>1))/100.0f);
             }
             else if(_optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie")){
-                _valFromSlider = (progress - 100)/4;
-                value = (((float)_valFromSlider)/100.0f);
+                value = (((float)((progress - 100)>>2))/100.0f);
             }
             else if(_optionsLabel.equals("Temperatura - Kelvin")){
                 value = progress*200;
             }
-            else if(_optionsLabel.equals("Czarne światło")){
-                value = progress;
-            }
-            else if(_optionsLabel.equals("Dekompozycja")){
-                value = progress;
-            }
-            else if(_optionsLabel.equals("1-Kanał")){
-                value = progress;
-            }
-            else if(_optionsLabel.equals("N-Szarości")){
-                value = progress;
-            }
-            else if(_optionsLabel.equals("Zamiana kanału")){
-                value = progress;
-            }
             else if(_optionsLabel.equals("Gamma")){
                 value = ((float)(progress+1)/100.0f);
-            }
-            else if(_optionsLabel.equals("Solaryzacja")){
-                // zmienic na wartosci 1-128
-                _valFromSlider = progress - 100;
-                value = (((float)_valFromSlider)/100.0f);
-            }
-            else if(_optionsLabel.equals("Proste wyostrzanie")){
-                value = progress;
-            }
-            else if(_optionsLabel.equals("Kwantyzacja")){
-                value = progress+1;
-            }
-            else if(_optionsLabel.equals("Mozaika")){
-                value = progress+1;
-            }
-            else if(_optionsLabel.equals("Farba olejna")){
-                value = progress+1;
-            }
-            else if(_optionsLabel.equals("Wypełnienie światłem")){
-                value = (float)progress/100.0f;
-            }
-            else if(_optionsLabel.equals("Poruszenie")){
-                value = progress;
             }
             UpdateImage(value);
             _optSliderText.setText(_optionsLabel+" "+value);
@@ -594,7 +535,7 @@ public class Editor extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-// ma byc taka koleknosc
+        // ma byc taka koleknosc
         HideNotifAndTitleBars();
         setContentView(R.layout.activity_editor);
 
