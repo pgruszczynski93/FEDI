@@ -50,12 +50,13 @@ import java.io.IOException;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 2, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
+    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 2, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Proste wyostrzanie"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
-            "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna","F1","F1"};
+            "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
+            "Wypełnienie światłem","Poruszenie","F1","F1","F1","F1","F1"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
@@ -102,6 +103,8 @@ public class Editor extends AppCompatActivity {
     ScriptC_quantization _rsQuantization;
     ScriptC_mosaic_filter _rsMosaic;
     ScriptC_oilpainting_filter _rsOilPaint;
+    ScriptC_fill_pattern _rsFillPat;
+    ScriptC_mist_filter _rsMist;
     //**************************
     RenderScriptTask _currentTask;
 
@@ -148,7 +151,6 @@ public class Editor extends AppCompatActivity {
                 index = mCurrentBitmap;
 
                 if(_rsKernel.equals("Jasność")){
-                    //CreateScript(_optionsLabel);
                     _rsBrightness.set_brightness_value(values[0]);
                     _rsBrightness.forEach_brightness(_inAllocation, _outAllocations[index]);
                 }
@@ -286,6 +288,19 @@ public class Editor extends AppCompatActivity {
                     _rsOilPaint.set_size(values[0].intValue()+1);
                     _rsOilPaint.forEach_oilpainting_filter(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Wypełnienie światłem")){
+                    _rsFillPat.set_img_in(_inAllocation);
+                    _rsFillPat.set_width(_inputBitmap.getWidth());
+                    _rsFillPat.set_height(_inputBitmap.getHeight());
+                    _rsFillPat.set_intensity(values[0]);
+                    _rsFillPat.forEach_fill_pattern(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Poruszenie")){
+                    _rsMist.set_img_in(_inAllocation);
+                    _rsMist.set_width(_inputBitmap.getWidth());
+                    _rsMist.set_height(_inputBitmap.getHeight());
+                    _rsMist.forEach_mist_filter(_inAllocation, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 mCurrentBitmap = (mCurrentBitmap + 1) % NUM_BITMAPS;
             }
@@ -380,6 +395,8 @@ public class Editor extends AppCompatActivity {
         _rsQuantization = new ScriptC_quantization(rs);
         _rsMosaic = new ScriptC_mosaic_filter(rs);
         _rsOilPaint = new ScriptC_oilpainting_filter(rs);
+        _rsFillPat = new ScriptC_fill_pattern(rs);
+        _rsMist = new ScriptC_mist_filter(rs);
     }
 
     void UpdateImage(final float f) {
@@ -390,168 +407,78 @@ public class Editor extends AppCompatActivity {
         _currentTask.execute(f);
     }
 
+    void SetOptionSlider(int progress, int max, float imageValue){
+        _sliderOptLayout.setVisibility(View.VISIBLE);
+        _optSlider.setProgress(progress);
+        _optSlider.setMax(max);
+        UpdateImage(imageValue);
+    }
 
     /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TESTOWO!!!!!!!!!!!!!!!!!!! */
     // listener dla kliknietego buttona
     View.OnClickListener btnClicked = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            // reset slidera i labela po kazdym kliknieciu buttona
-
             _optionsLabel = ((Button) v).getText().toString();
             ResetSliderLayout();
-            _sliderOptLayout.setVisibility(View.VISIBLE);
-
-            //12.07.17
-//            try{
-//                _inputBitmap = GetBitmapFromUri(_imageUri);
-//            }catch (IOException e){
-//                Toast.makeText(getApplicationContext(), "Wyjebalo sie", Toast.LENGTH_LONG).show();
-//            }
+            //_sliderOptLayout.setVisibility(View.VISIBLE);
 
             InitRenderScriptOps();
-
             CreateScript();
 
-            UpdateImage(0.0f);
-//            _zoomPinchImageView.SetImgUri(GetImageUri(getApplicationContext(), _inputBitmap));
+                if(_optionsLabel.equals("Jasność") || _optionsLabel.equals("Kontrast") || _optionsLabel.equals("Odcień")||
+                        _optionsLabel.equals("Temperatura") || _optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie") ||
+                        _optionsLabel.equals("Atmosfera") || _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") ||
+                        _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia")){
 
-
-            long stop;
-            long start = SystemClock.elapsedRealtime();
-           // try{
-
-                if(_optionsLabel.equals("Jasność")){
-                    UpdateImage(0.0f);
+                    SetOptionSlider(100,200,0.0f);
                 }
-                else if(_optionsLabel.equals("Kontrast")){
-                     UpdateImage(0.0f);
+                else if(_optionsLabel.equals("1-Kanał") || _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") ||
+                        _optionsLabel.equals("Proste wyostrzanie")){
+                    SetOptionSlider(0,2,0.0f);
+                }
+                else if(_optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom")){
+                    SetOptionSlider(0,24,1.0f);
+                }
+                else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie")){
+                    SetOptionSlider(0,100,0.0f);
                 }
                 else if(_optionsLabel.equals("Nasycenie")){
-                     UpdateImage(1.0f);
+                    SetOptionSlider(100,200,1.0f);
                 }
-                else if(_optionsLabel.equals("Rozmycie")){
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(24);
-                    UpdateImage(1.0f);
-                }
-                else if(_optionsLabel.equals("Bloom")){
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(24);
-                    UpdateImage(1.0f);
-                     //UpdateImage(0.0f);
-                    //_optSlider.setMax(200); // tymczasowo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                }
-//                else if(_optionsLabel.equals("Sepia")){
-//                    SepiaEffect();
-//                }
                 else if(_optionsLabel.equals("Progowanie")){
-                    UpdateImage(0.5f);
-                }
-                else if(_optionsLabel.equals("Odcień")){
-                    UpdateImage(0.0f);
-                }
-                else if(_optionsLabel.equals("Temperatura")){
-                    UpdateImage(0.0f);
-                }
-                else if(_optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie") || _optionsLabel.equals("Atmosfera") ||
-                        _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") || _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia") ||
-                        _optionsLabel.equals("Kropkowanie")){
-
-                    UpdateImage(0.0f);
+                    SetOptionSlider(100,200,0.5f);
                 }
                 else if(_optionsLabel.equals("Temperatura - Kelvin")){
                     UpdateImage(8000.0f);
                 }
                 else if(_optionsLabel.equals("Czarne światło")){
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(6);
-                    UpdateImage(1.0f);
+                    SetOptionSlider(0,6,1.0f);
                 }
                 else if(_optionsLabel.equals("Dekompozycja")) {
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(1);
-                    UpdateImage(0.0f);
-                    //UpdateImage(0.0f);
-                    //_optSlider.setMax(200); // tymczasowo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                }
-                else if(_optionsLabel.equals("1-Kanał")){
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(2);
-                    UpdateImage(0.0f);
-                //UpdateImage(0.0f);
-                //_optSlider.setMax(200); // tymczasowo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                }
-                else if(_optionsLabel.equals("N-Szarości")){
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(2);
-                    UpdateImage(0.0f);
-                }
-                else if(_optionsLabel.equals("Zamiana kanału")){
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(2);
-                    UpdateImage(0.0f);
+                    SetOptionSlider(0,1,0.0f);
                 }
                 else if(_optionsLabel.equals("Gamma")){
-                    _optSlider.setProgress(100);
-                    _optSlider.setMax(798);
-                    UpdateImage(1.0f);
+                    SetOptionSlider(100,798,1.0f);
                 }
                 else if(_optionsLabel.equals("Solaryzacja")){
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(200);
-                    UpdateImage(0.0f);
-                }
-                else if(_optionsLabel.equals("Proste wyostrzanie")){
-                   // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(2);
-                    //krawedzie dla 0
-                    UpdateImage(0);
+                    SetOptionSlider(0,200,0.0f);
                 }
                 else if(_optionsLabel.equals("Kwantyzacja")){
-                    // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(31);
-                    //krawedzie dla 0
-                    UpdateImage(1);
+                    SetOptionSlider(0,31,1.0f);
                 }
                 else if(_optionsLabel.equals("Mozaika")){
-                    // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(100);
-                    //krawedzie dla 0
-                    UpdateImage(1);
+                    SetOptionSlider(0,100,1.0f);
                 }
                 else if(_optionsLabel.equals("Farba olejna")){
-                    // Toast.makeText(getApplicationContext(), "OST", Toast.LENGTH_LONG).show();
-                    _optSlider.setProgress(0);
-                    _optSlider.setMax(50);
-                    //krawedzie dla 0
-                    UpdateImage(1);
+                    SetOptionSlider(0,50,1.0f);
+                }
+                else{
+                    UpdateImage(0.0f);
+                    _sliderOptLayout.setVisibility(View.INVISIBLE);
                 }
             }
-            //catch (IOException e){
-              //  Toast.makeText(getApplicationContext(), "Błąd operacji", Toast.LENGTH_SHORT).show();
-            //}
-//            stop = SystemClock.elapsedRealtime() - start;
-//            Toast.makeText(getApplicationContext(), "CZAS "+Float.toString(stop/1000f), Toast.LENGTH_SHORT).show();
         };
-//    };
-    // PRZENIESC EFEKTY DO INNEJ KLASY
-    // PRZENIESC EFEKTY DO INNEJ KLASY
-    // PRZENIESC EFEKTY DO INNEJ KLASY
-//    void BrightnessEffect(float brightness) throws IOException{
-//        /***
-//         * 1. po wcisnieciu przycisku tworzy obiekt renderscriptu
-//         * 2. wlacza sie nasłuch na sliderze
-//         * 3. okej tworzy bitmape
-//         */
-//        _resultBitmap = _coreOperation.Brightness(this, _inputBitmap, brightness);
-//        _zoomPinchImageView.SetImgUri(GetImageUri(this, _resultBitmap));
-//        Glide.with( this ).load( GetImageUri(this, _resultBitmap) ).diskCacheStrategy( DiskCacheStrategy.NONE ).skipMemoryCache( true ).into( _zoomPinchImageView);
-//        _zoomPinchImageView.invalidate();
-//    }
 
     public Uri GetImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -567,85 +494,90 @@ public class Editor extends AppCompatActivity {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
-            // TUTAJ WRZUCIC TAKZE WSZYSTKIE OPERACJE GRAFICZNE W MOMENCIE GDY SLIDER ZMIENIA WARTOSC
-                if(_optionsLabel.equals("Jasność")){
-                    _valFromSlider = progress - 100;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Kontrast")){
-                    _valFromSlider = progress - 100;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Nasycenie")){
-                    _valFromSlider = progress;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Rozmycie")){
-                     _valFromSlider = progress;
-                     value = (((float)_valFromSlider)+1);
-                }
-                else if(_optionsLabel.equals("Bloom")){
-                    _valFromSlider = progress;
-                    value = (((float)_valFromSlider)+1);
-                    //_valFromSlider = progress-100;
-                    //value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Progowanie")){
-                    _valFromSlider = progress/2;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Odcień")){
-                    _valFromSlider = (progress - 100)/2;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Temperatura")){
-                    _valFromSlider = (progress - 100)/2;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie")){
-                    _valFromSlider = (progress - 100)/4;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Temperatura - Kelvin")){
-                    value = progress*200;
-                }
-                else if(_optionsLabel.equals("Czarne światło")){
-                    value = progress;
-                }
-                else if(_optionsLabel.equals("Dekompozycja")){
-                    value = progress;
-                }
-                else if(_optionsLabel.equals("1-Kanał")){
-                    value = progress;
-                }
-                else if(_optionsLabel.equals("N-Szarości")){
-                    value = progress;
-                }
-                else if(_optionsLabel.equals("Zamiana kanału")){
-                    value = progress;
-                }
-                else if(_optionsLabel.equals("Gamma")){
-                    value = ((float)(progress+1)/100.0f);
-                }
-                else if(_optionsLabel.equals("Solaryzacja")){
-                    // zmienic na wartosci 1-128
-                    _valFromSlider = progress - 100;
-                    value = (((float)_valFromSlider)/100.0f);
-                }
-                else if(_optionsLabel.equals("Proste wyostrzanie")){
-                    value = progress;
-                }
-                else if(_optionsLabel.equals("Kwantyzacja")){
-                    value = progress+1;
-                }
-                else if(_optionsLabel.equals("Mozaika")){
-                    value = progress+1;
-                }
-                else if(_optionsLabel.equals("Farba olejna")){
-                    value = progress+1;
-                }
-                UpdateImage(value);
-                _optSliderText.setText(_optionsLabel+" "+value);
+            if(_optionsLabel.equals("Jasność")){
+                _valFromSlider = progress - 100;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Kontrast")){
+                _valFromSlider = progress - 100;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Nasycenie")){
+                _valFromSlider = progress;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Rozmycie")){
+                 _valFromSlider = progress;
+                 value = (((float)_valFromSlider)+1);
+            }
+            else if(_optionsLabel.equals("Bloom")){
+                _valFromSlider = progress;
+                value = (((float)_valFromSlider)+1);
+                //_valFromSlider = progress-100;
+                //value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Progowanie")){
+                _valFromSlider = progress/2;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Odcień")){
+                _valFromSlider = (progress - 100)/2;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Temperatura")){
+                _valFromSlider = (progress - 100)/2;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie")){
+                _valFromSlider = (progress - 100)/4;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Temperatura - Kelvin")){
+                value = progress*200;
+            }
+            else if(_optionsLabel.equals("Czarne światło")){
+                value = progress;
+            }
+            else if(_optionsLabel.equals("Dekompozycja")){
+                value = progress;
+            }
+            else if(_optionsLabel.equals("1-Kanał")){
+                value = progress;
+            }
+            else if(_optionsLabel.equals("N-Szarości")){
+                value = progress;
+            }
+            else if(_optionsLabel.equals("Zamiana kanału")){
+                value = progress;
+            }
+            else if(_optionsLabel.equals("Gamma")){
+                value = ((float)(progress+1)/100.0f);
+            }
+            else if(_optionsLabel.equals("Solaryzacja")){
+                // zmienic na wartosci 1-128
+                _valFromSlider = progress - 100;
+                value = (((float)_valFromSlider)/100.0f);
+            }
+            else if(_optionsLabel.equals("Proste wyostrzanie")){
+                value = progress;
+            }
+            else if(_optionsLabel.equals("Kwantyzacja")){
+                value = progress+1;
+            }
+            else if(_optionsLabel.equals("Mozaika")){
+                value = progress+1;
+            }
+            else if(_optionsLabel.equals("Farba olejna")){
+                value = progress+1;
+            }
+            else if(_optionsLabel.equals("Wypełnienie światłem")){
+                value = (float)progress/100.0f;
+            }
+            else if(_optionsLabel.equals("Poruszenie")){
+                value = progress;
+            }
+            UpdateImage(value);
+            _optSliderText.setText(_optionsLabel+" "+value);
         }
 
         @Override
@@ -668,12 +600,6 @@ public class Editor extends AppCompatActivity {
 
        // _imageView = (ImageView)findViewById(R.id.imageView2);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
-        //**
-       // _progressBar = (ProgressBar)findViewById(R.id.progressBar);
-
-        //**
-//        _infoButton = (Button)findViewById(R.id.infoButton);
-
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
@@ -732,7 +658,6 @@ public class Editor extends AppCompatActivity {
 //
         }
     }
-
     void InitRenderScriptOps(){
 
         try{
@@ -760,7 +685,6 @@ public class Editor extends AppCompatActivity {
 
 //        _zoomPinchImageView.SetBitmap(_bitmapsOut[mCurrentBitmap]);
         mCurrentBitmap += (mCurrentBitmap + 1) % NUM_BITMAPS;
-
 
     }
 
@@ -882,17 +806,12 @@ public class Editor extends AppCompatActivity {
         _prevBottomButton = _currBottomButton;
     }
 
-    // DODAC ID DLA KAZDEGO BUTTONA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // SPRAWDZIC UUPRAWNIENIA DO KARTY PAMIECI !!!!!!!!!!!!!!!!!!!!!!!!!!! - jest ok stare thumbnaile
     void FillOptionsBar(String[] buttonValues, Button[] buttonList, int buttonCount){
         for(int i=0; i<buttonCount; i++){
-
             buttonList[i] = new Button(this);
             buttonList[i].setTag(buttonValues[i]);
             buttonList[i].setText(buttonValues[i]);
-            // ma wyswietlic slider z odpowiednia etykieta
             buttonList[i].setOnClickListener(btnClicked);
-
             _optionsLayout.addView(buttonList[i],new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -908,51 +827,37 @@ public class Editor extends AppCompatActivity {
         _optSlider.setOnSeekBarChangeListener(sbValueChange);
     }
 
-    public void ShowAdjustments(View v){
-        _currBottomButton = "adjustments";
-        _adjustmentsButtonsList = new Button[ADJUSTMENT_COUNT];
+    void FillButtons(String curButtonLabel, Button[] buttonList, String[] labels, int count){
+        _currBottomButton = curButtonLabel;
+        buttonList = new Button[count];
         SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_adjustmentValues, _adjustmentsButtonsList ,ADJUSTMENT_COUNT);
+        FillOptionsBar(labels, buttonList ,count);
+    }
+
+    public void ShowAdjustments(View v){
+        FillButtons("adjustments", _adjustmentsButtonsList, _adjustmentValues, ADJUSTMENT_COUNT);
     }
 
     public void ShowDetails(View v){
-        _currBottomButton = "details";
-        _detailsButtonList = new Button[DETAILS_COUNT];
-        SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_detailsValues, _detailsButtonList, DETAILS_COUNT);
+        FillButtons("details", _detailsButtonList, _detailsValues, DETAILS_COUNT);
     }
     public void ShowFilters(View v){
-        _currBottomButton = "filters";
-        _filtersButtonList = new Button[FILTERS_COUNT];
-        SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_filtersValues, _filtersButtonList, FILTERS_COUNT);
+        FillButtons("filters", _filtersButtonList, _filtersValues, FILTERS_COUNT);
     }
     public void ShowWhiteBalance(View v){
-        _currBottomButton = "whitebalance";
-        _wbButtonList = new Button[WHITE_BALANCE_COUNT];
-        SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_whiteBalanceValues, _wbButtonList, WHITE_BALANCE_COUNT);
+        FillButtons("whitebalance", _wbButtonList, _whiteBalanceValues, WHITE_BALANCE_COUNT);
     }
 
     public void ShowRotation(View v){
-        _currBottomButton = "rotation";
-        _rotationButtonList = new Button[ROTATIONS_COUNT];
-        SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_rotationValues, _rotationButtonList, ROTATIONS_COUNT);
+        FillButtons("rotation", _rotationButtonList, _rotationValues, ROTATIONS_COUNT);
     }
 
     public void ShowNaturalFilters(View v){
-        _currBottomButton = "naturalfilters";
-        _natururalFiltButtonList = new Button[NATURALFILTERS_COUNT];
-        SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_naturalFiltersValues, _natururalFiltButtonList, NATURALFILTERS_COUNT);
+        FillButtons("naturalfilters", _natururalFiltButtonList, _naturalFiltersValues, NATURALFILTERS_COUNT);
     }
 
     public void ShowGrayscaleFilters(View v){
-        _currBottomButton = "grayscale";
-        _grayScaleButtonList = new Button[GRAYSCALE_COUNT];
-        SetOptionsVisibility(_currBottomButton);
-        FillOptionsBar(_grayscalesValues, _grayScaleButtonList, GRAYSCALE_COUNT);
+        FillButtons("grayscale", _grayScaleButtonList, _grayscalesValues, GRAYSCALE_COUNT);
     }
 
 
