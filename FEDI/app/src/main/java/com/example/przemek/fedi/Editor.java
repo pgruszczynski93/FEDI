@@ -57,7 +57,8 @@ public class Editor extends AppCompatActivity {
     final String[] _detailsValues = {"Struktura", "Proste wyostrzanie"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
             "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
-            "Wypełnienie światłem","Poruszenie","F1","F1","F1","F1","F1"};
+            "Wypełnienie światłem","Poruszenie","Winietowanie",
+            "Soft glow","Wyrównanie histogramu","Rozciągnięcie histogramu","F1"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
     final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
@@ -106,8 +107,13 @@ public class Editor extends AppCompatActivity {
     ScriptC_oilpainting_filter _rsOilPaint;
     ScriptC_fill_pattern _rsFillPat;
     ScriptC_mist_filter _rsMist;
+    ScriptC_vignette_filter _rsVignette;
+    ScriptC_soft_glow _rsSoftGlow;
+    ScriptC_equalize_histogram _rsHistogramEq;
+    ScriptC_stretch_histogram _rsHistogramSt;
     //**************************
     RenderScriptTask _currentTask;
+    RenderScript rs;
 
     Bitmap _inputBitmap, _resultBitmap;
 
@@ -299,6 +305,33 @@ public class Editor extends AppCompatActivity {
                     _rsMist.set_height(_inputBitmap.getHeight());
                     _rsMist.forEach_mist_filter(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Winietowanie")){
+                    _rsVignette.set_img_in(_inAllocation);
+                    _rsVignette.set_width(_inputBitmap.getWidth());
+                    _rsVignette.set_height(_inputBitmap.getHeight());
+                    _rsVignette.set_size(values[0]);
+                    _rsVignette.forEach_vignette_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Soft glow")){
+                    _rsSoftGlow.set_img_in(_inAllocation);
+                    _rsSoftGlow.set_width(_inputBitmap.getWidth());
+                    _rsSoftGlow.set_height(_inputBitmap.getHeight());
+                    _rsSoftGlow.forEach_soft_glow(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Wyrównanie histogramu")){
+                    _rsHistogramEq.set_img_in(_inAllocation);
+                    _rsHistogramEq.set_width(_inputBitmap.getWidth());
+                    _rsHistogramEq.set_height(_inputBitmap.getHeight());
+                    _rsHistogramEq.forEach_equalize_histogram(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Rozciągnięcie histogramu")){
+                    _rsHistogramSt.set_img_in(_inAllocation);
+                    _rsHistogramSt.set_img_out(_outAllocations[index]);
+                    _rsHistogramSt.set_render_script(_rsHistogramSt);
+                    //_rsHistogramSt.set_width(_inputBitmap.getWidth());
+                    //_rsHistogramSt.set_height(_inputBitmap.getHeight());
+                    _rsHistogramSt.invoke_filter();
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];
                 _currentBitmap = (_currentBitmap + 1) % NUM_BITMAPS;
@@ -397,6 +430,10 @@ public class Editor extends AppCompatActivity {
         _rsOilPaint = new ScriptC_oilpainting_filter(rs);
         _rsFillPat = new ScriptC_fill_pattern(rs);
         _rsMist = new ScriptC_mist_filter(rs);
+        _rsVignette = new ScriptC_vignette_filter(rs);
+        _rsSoftGlow = new ScriptC_soft_glow(rs);
+        _rsHistogramEq = new ScriptC_equalize_histogram(rs);
+        _rsHistogramSt = new ScriptC_stretch_histogram(rs);
     }
 
     void UpdateImage(final float f) {
@@ -440,7 +477,8 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom")){
                 SetOptionSlider(0,24,1.0f);
             }
-            else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja")){
+            else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja") ||
+                    _optionsLabel.equals("Winietowanie")){
                 SetOptionSlider(0,100,0.0f);
             }
             else if(_optionsLabel.equals("Nasycenie")){
@@ -495,7 +533,7 @@ public class Editor extends AppCompatActivity {
                 value = (((float)(progress - 100))/100.0f);
             }
             else if(_optionsLabel.equals("Nasycenie") || _optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Progowanie") ||
-                    _optionsLabel.equals("Solaryzacja")){
+                    _optionsLabel.equals("Solaryzacja") || _optionsLabel.equals("Winietowanie")){
                 value = (float)progress/100.0f;
             }
             else if(_optionsLabel.equals("Kwantyzacja") || _optionsLabel.equals("Mozaika") || _optionsLabel.equals("Farba olejna") ||
