@@ -319,18 +319,18 @@ public class Editor extends AppCompatActivity {
                     _rsSoftGlow.forEach_soft_glow(_inAllocation, _outAllocations[index]);
                 }
                 else if(_rsKernel.equals("Wyrównanie histogramu")){
-                    _rsHistogramEq.set_img_in(_inAllocation);
-                    _rsHistogramEq.set_width(_inputBitmap.getWidth());
-                    _rsHistogramEq.set_height(_inputBitmap.getHeight());
-                    _rsHistogramEq.forEach_equalize_histogram(_inAllocation, _outAllocations[index]);
+                    _rsHistogramEq.set_size(_inputBitmap.getHeight() * _inputBitmap.getWidth());
+                    _rsHistogramEq.invoke_setup();
+                    _rsHistogramEq.forEach_equalize_histogram_rgbyuv(_inAllocation, _outAllocations[index]);
+                    _rsHistogramEq.invoke_equalize_y_histogram();
+                    _rsHistogramEq.forEach_equalize_histogram_yuvrgb(_outAllocations[index], _inAllocation);
+                    _outAllocations[index] = _inAllocation;
                 }
                 else if(_rsKernel.equals("Rozciągnięcie histogramu")){
                     _rsHistogramSt.set_img_in(_inAllocation);
                     _rsHistogramSt.set_img_out(_outAllocations[index]);
-                    _rsHistogramSt.set_render_script(_rsHistogramSt);
-                    //_rsHistogramSt.set_width(_inputBitmap.getWidth());
-                    //_rsHistogramSt.set_height(_inputBitmap.getHeight());
-                    _rsHistogramSt.invoke_filter();
+                    _rsHistogramSt.invoke_setup();
+                    _rsHistogramSt.forEach_stretch_histogram(_inAllocation, _outAllocations[index]);
                 }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];

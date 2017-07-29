@@ -10,7 +10,8 @@ int32_t width, height;
 float min_r = 1.0f, min_g = 1.0f, min_b = 1.0f;
 float max_r = 0.0f, max_g = 0.0f, max_b = 0.0f;
 
-static void setup(){
+// ewentualnie przywrocic do wersji z static setup i root
+void setup(){
     float4 curr_pix;
     float3 curr_rgb;
     width = rsAllocationGetDimX(img_in);
@@ -30,9 +31,8 @@ static void setup(){
         }
     }
 }
-
-void root(const uchar4 *pixel_in, uchar4 *pixel_out, const void *usrData, uint32_t x, uint32_t y) {
-    float4 full_pix = rsUnpackColor8888(*pixel_in);
+uchar4 __attribute__((kernel)) stretch_histogram(uchar4 pixel_in, uint32_t x, uint32_t y){
+    float4 full_pix = rsUnpackColor8888(pixel_in);
     float3 rgb = full_pix.rgb;
 
     if(((min_r != 1.0) && (min_g != 1.0) && (min_b != 1.0)) && ((max_r != 0.0) && (max_g != 0.0) && (max_b != 0.0))) {
@@ -43,10 +43,6 @@ void root(const uchar4 *pixel_in, uchar4 *pixel_out, const void *usrData, uint32
     else
         rgb = full_pix.rgb;
 
-    *pixel_out = rsPackColorTo8888(rgb);
+    return rsPackColorTo8888(rgb);
 }
 
-void filter(){
-    setup();
-    rsForEach(render_script, img_in, img_out);
-}
