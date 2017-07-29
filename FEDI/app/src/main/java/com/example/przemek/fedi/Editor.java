@@ -67,7 +67,7 @@ public class Editor extends AppCompatActivity {
     final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 3, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
-    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Maska wyostrzająca"};
+    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
             "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
             "Wypełnienie światłem","Poruszenie","Winietowanie",
@@ -346,8 +346,8 @@ public class Editor extends AppCompatActivity {
                     _rsHistogramSt.invoke_setup();
                     _rsHistogramSt.forEach_stretch_histogram(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("Maska wyostrzająca")){
-                    _rsBlur.setRadius(3.0f);
+                else if(_rsKernel.equals("Unsharp mask")){
+                    _rsBlur.setRadius(5.0f);
 
                     _orgImageAlloc.copyFrom(_inAllocation);
 
@@ -360,7 +360,7 @@ public class Editor extends AppCompatActivity {
                     _rsUnsharpMask.forEach_unsharp_mask(_inAllocation, _outAllocations[index]);
 
                     _unsharpDiffAllc.copyFrom(_outAllocations[index]);
-                    _rsContrast.set_contrast_value(0.5f);
+                    _rsContrast.set_contrast_value(0.7f);
 
                     _rsContrast.forEach_contrast(_inAllocation, _outAllocations[index]);
                     _unsharpContrastAlloc.copyFrom(_outAllocations[index]);
@@ -522,7 +522,7 @@ public class Editor extends AppCompatActivity {
                 SetOptionSlider(0,24,1.0f);
             }
             else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja") ||
-                    _optionsLabel.equals("Winietowanie") || _optionsLabel.equals("Maska wyostrzająca")){
+                    _optionsLabel.equals("Winietowanie") || _optionsLabel.equals("Unsharp mask")){
                 SetOptionSlider(0,100,0.0f);
             }
             else if(_optionsLabel.equals("Nasycenie")){
@@ -578,7 +578,7 @@ public class Editor extends AppCompatActivity {
             }
             else if(_optionsLabel.equals("Nasycenie") || _optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Progowanie") ||
                     _optionsLabel.equals("Solaryzacja") || _optionsLabel.equals("Winietowanie") ||
-                    _optionsLabel.equals("Maska wyostrzająca")){
+                    _optionsLabel.equals("Unsharp mask")){
                 value = (float)progress/100.0f;
             }
             else if(_optionsLabel.equals("Kwantyzacja") || _optionsLabel.equals("Mozaika") || _optionsLabel.equals("Farba olejna") ||

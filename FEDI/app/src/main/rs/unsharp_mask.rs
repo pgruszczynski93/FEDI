@@ -29,7 +29,7 @@ uchar4 __attribute__((kernel)) unsharp_mask_mix(uchar4 in, uint32_t x, uint32_t 
 
     luminance_percent = GetY(unsharp_rgb);
 
-    if(luminance_percent > threshold){
+    if(luminance_percent < threshold){
         out = org_rgb + unsharp_rgb * contrast_rgb;
     }
     else{
@@ -38,6 +38,3 @@ uchar4 __attribute__((kernel)) unsharp_mask_mix(uchar4 in, uint32_t x, uint32_t 
 
     return rsPackColorTo8888(out);
 }
-
-
-
