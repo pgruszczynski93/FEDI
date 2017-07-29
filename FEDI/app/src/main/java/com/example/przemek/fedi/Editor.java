@@ -47,14 +47,27 @@ import java.util.ArrayList;
 
 /***
  * Klasa aktywności Edytora zdjęć.
+ *
  */
+
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
+///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 2, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
+    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 3, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
-    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie"};
+    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Maska wyostrzająca"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
             "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
             "Wypełnienie światłem","Poruszenie","Winietowanie",
@@ -65,10 +78,10 @@ public class Editor extends AppCompatActivity {
     final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
 
 //    FediCore _coreOperation;
-    final int NUM_BITMAPS = 2;
+    final int NUM_BITMAPS = 2, UNSHARP_ALLOCS = 4;
     int _currentBitmap = 0;
-    Bitmap[] _bitmapsOut;
-    Allocation _inAllocation;
+    Bitmap[] _bitmapsOut, _tmpBitmaps;
+    Allocation _inAllocation, _orgImageAlloc, _unsharpBlurAlloc, _unsharpContrastAlloc, _unsharpDiffAllc;
     Allocation[] _outAllocations;
 
     //**************** przemyslec
@@ -111,6 +124,7 @@ public class Editor extends AppCompatActivity {
     ScriptC_soft_glow _rsSoftGlow;
     ScriptC_equalize_histogram _rsHistogramEq;
     ScriptC_stretch_histogram _rsHistogramSt;
+    ScriptC_unsharp_mask _rsUnsharpMask;
     //**************************
     RenderScriptTask _currentTask;
     RenderScript rs;
@@ -332,6 +346,29 @@ public class Editor extends AppCompatActivity {
                     _rsHistogramSt.invoke_setup();
                     _rsHistogramSt.forEach_stretch_histogram(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Maska wyostrzająca")){
+                    _rsBlur.setRadius(3.0f);
+
+                    _orgImageAlloc.copyFrom(_inAllocation);
+
+                    _rsBlur.setInput(_orgImageAlloc);
+                    _rsBlur.forEach(_outAllocations[index]);
+
+                    _unsharpBlurAlloc.copyFrom(_outAllocations[index]);
+
+                    _rsUnsharpMask.set_blurred_img(_unsharpBlurAlloc);
+                    _rsUnsharpMask.forEach_unsharp_mask(_inAllocation, _outAllocations[index]);
+
+                    _unsharpDiffAllc.copyFrom(_outAllocations[index]);
+                    _rsContrast.set_contrast_value(0.5f);
+
+                    _rsContrast.forEach_contrast(_inAllocation, _outAllocations[index]);
+                    _unsharpContrastAlloc.copyFrom(_outAllocations[index]);
+                    _rsUnsharpMask.set_org_img(_inAllocation);
+                    _rsUnsharpMask.set_unsharp_img(_unsharpDiffAllc);
+                    _rsUnsharpMask.set_threshold(values[0]);
+                    _rsUnsharpMask.forEach_unsharp_mask_mix(_unsharpContrastAlloc, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];
                 _currentBitmap = (_currentBitmap + 1) % NUM_BITMAPS;
@@ -390,6 +427,12 @@ public class Editor extends AppCompatActivity {
         RenderScript rs = RenderScript.create(this);
 
         _inAllocation = Allocation.createFromBitmap(rs, _inputBitmap);
+        // to unsharp mask
+        _orgImageAlloc = Allocation.createFromBitmap(rs, _tmpBitmaps[0]);
+        _unsharpBlurAlloc = Allocation.createFromBitmap(rs, _tmpBitmaps[1]);
+        _unsharpContrastAlloc = Allocation.createFromBitmap(rs, _tmpBitmaps[2]);
+        _unsharpDiffAllc = Allocation.createFromBitmap(rs, _tmpBitmaps[3]);
+        /// maska wyostrzajaca
         _outAllocations = new Allocation[NUM_BITMAPS];
         for (int i = 0; i < NUM_BITMAPS; ++i) {
             _outAllocations[i] = Allocation.createFromBitmap(rs, _bitmapsOut[i]);
@@ -434,6 +477,7 @@ public class Editor extends AppCompatActivity {
         _rsSoftGlow = new ScriptC_soft_glow(rs);
         _rsHistogramEq = new ScriptC_equalize_histogram(rs);
         _rsHistogramSt = new ScriptC_stretch_histogram(rs);
+        _rsUnsharpMask = new ScriptC_unsharp_mask(rs);
     }
 
     void UpdateImage(final float f) {
@@ -478,7 +522,7 @@ public class Editor extends AppCompatActivity {
                 SetOptionSlider(0,24,1.0f);
             }
             else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja") ||
-                    _optionsLabel.equals("Winietowanie")){
+                    _optionsLabel.equals("Winietowanie") || _optionsLabel.equals("Maska wyostrzająca")){
                 SetOptionSlider(0,100,0.0f);
             }
             else if(_optionsLabel.equals("Nasycenie")){
@@ -533,7 +577,8 @@ public class Editor extends AppCompatActivity {
                 value = (((float)(progress - 100))/100.0f);
             }
             else if(_optionsLabel.equals("Nasycenie") || _optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Progowanie") ||
-                    _optionsLabel.equals("Solaryzacja") || _optionsLabel.equals("Winietowanie")){
+                    _optionsLabel.equals("Solaryzacja") || _optionsLabel.equals("Winietowanie") ||
+                    _optionsLabel.equals("Maska wyostrzająca")){
                 value = (float)progress/100.0f;
             }
             else if(_optionsLabel.equals("Kwantyzacja") || _optionsLabel.equals("Mozaika") || _optionsLabel.equals("Farba olejna") ||
@@ -541,7 +586,7 @@ public class Editor extends AppCompatActivity {
                 value = progress+1;
             }
             else if(_optionsLabel.equals("Czarne światło") || _optionsLabel.equals("Dekompozycja") || _optionsLabel.equals("1-Kanał") ||
-                    _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie")){
+                    _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie") ){
                 value = progress;
             }
             else if(_optionsLabel.equals("Odcień") || _optionsLabel.equals("Temperatura")){
@@ -664,8 +709,13 @@ public class Editor extends AppCompatActivity {
         }
 
         _bitmapsOut = new Bitmap[NUM_BITMAPS];
+        _tmpBitmaps = new Bitmap[UNSHARP_ALLOCS];
         for (int i = 0; i < NUM_BITMAPS; ++i) {
             _bitmapsOut[i] = Bitmap.createBitmap(_inputBitmap.getWidth(),
+                    _inputBitmap.getHeight(), _inputBitmap.getConfig());
+        }
+        for (int i = 0; i < UNSHARP_ALLOCS; ++i) {
+            _tmpBitmaps[i] = Bitmap.createBitmap(_inputBitmap.getWidth(),
                     _inputBitmap.getHeight(), _inputBitmap.getConfig());
         }
 
