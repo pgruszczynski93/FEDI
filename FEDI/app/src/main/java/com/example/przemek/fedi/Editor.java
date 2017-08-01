@@ -64,16 +64,16 @@ import java.util.ArrayList;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 3, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 3,
+    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 5, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
-    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask"};
+    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
             "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
             "Wypełnienie światłem","Poruszenie","Winietowanie",
             "Soft glow","Wyrównanie histogramu","Rozciągnięcie histogramu","F1"};
     final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
-    final String[] _rotationValues = {"Kąt", "90 w lewo", "90 w prawo"};
+    final String[] _rotationValues = {"Kąt", "90 lewo", "90 prawo", "Przerzuć pion", "Przerzuć poziom"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
     final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
 
@@ -125,6 +125,8 @@ public class Editor extends AppCompatActivity {
     ScriptC_equalize_histogram _rsHistogramEq;
     ScriptC_stretch_histogram _rsHistogramSt;
     ScriptC_unsharp_mask _rsUnsharpMask;
+    ScriptC_flip_filter _rsFlip;
+    ScriptC_min_max_filter _rsMinmax;
     //**************************
     RenderScriptTask _currentTask;
     RenderScript rs;
@@ -157,6 +159,7 @@ public class Editor extends AppCompatActivity {
     private class RenderScriptTask extends AsyncTask<Float, Void, Integer> {
         Boolean _issued = false;
         String _rsKernel;
+        Allocation _rotateAllocation;
 
         public RenderScriptTask(String rsKernel){
             _rsKernel = rsKernel;
@@ -369,6 +372,42 @@ public class Editor extends AppCompatActivity {
                     _rsUnsharpMask.set_threshold(values[0]);
                     _rsUnsharpMask.forEach_unsharp_mask_mix(_unsharpContrastAlloc, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Przerzuć poziom")){
+                    _rsFlip.set_img_in(_inAllocation);
+                    _rsFlip.invoke_setup();
+                    _rsFlip.set_direction(0);
+                    _rsFlip.forEach_flip_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Przerzuć pion")){
+                    _rsFlip.set_img_in(_inAllocation);
+                    _rsFlip.invoke_setup();
+                    _rsFlip.set_direction(1);
+                    _rsFlip.forEach_flip_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("90 lewo")){
+                    _rsFlip.set_img_in(_inAllocation);
+                    _rsFlip.invoke_setup();
+                    _rsFlip.set_direction(2);
+                    _rsFlip.forEach_flip_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("90 prawo")){
+                    _rsFlip.set_img_in(_inAllocation);
+                    _rsFlip.invoke_setup();
+                    _rsFlip.set_direction(3);
+                    _rsFlip.forEach_flip_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Maksimum")){
+                    _rsMinmax.set_img_in(_inAllocation);
+                    _rsMinmax.invoke_setup();
+                    _rsMinmax.set_type(0);
+                    _rsMinmax.forEach_min_max_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Minimum")){
+                    _rsMinmax.set_img_in(_inAllocation);
+                    _rsMinmax.invoke_setup();
+                    _rsMinmax.set_type(1);
+                    _rsMinmax.forEach_min_max_filter(_inAllocation, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];
                 _currentBitmap = (_currentBitmap + 1) % NUM_BITMAPS;
@@ -478,6 +517,8 @@ public class Editor extends AppCompatActivity {
         _rsHistogramEq = new ScriptC_equalize_histogram(rs);
         _rsHistogramSt = new ScriptC_stretch_histogram(rs);
         _rsUnsharpMask = new ScriptC_unsharp_mask(rs);
+        _rsFlip = new ScriptC_flip_filter(rs);
+        _rsMinmax = new ScriptC_min_max_filter(rs);
     }
 
     void UpdateImage(final float f) {
