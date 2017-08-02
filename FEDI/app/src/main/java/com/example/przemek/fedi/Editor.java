@@ -64,10 +64,10 @@ import java.util.ArrayList;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 5, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
+    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 7, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
-    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum"};
+    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
             "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
             "Wypełnienie światłem","Poruszenie","Winietowanie",
@@ -127,6 +127,7 @@ public class Editor extends AppCompatActivity {
     ScriptC_unsharp_mask _rsUnsharpMask;
     ScriptC_flip_filter _rsFlip;
     ScriptC_min_max_filter _rsMinmax;
+    ScriptC_edges_filters _rsEdges;
     //**************************
     RenderScriptTask _currentTask;
     RenderScript rs;
@@ -399,14 +400,31 @@ public class Editor extends AppCompatActivity {
                 else if(_rsKernel.equals("Maksimum")){
                     _rsMinmax.set_img_in(_inAllocation);
                     _rsMinmax.invoke_setup();
+                    _rsMinmax.set_size(values[0].intValue());
                     _rsMinmax.set_type(0);
                     _rsMinmax.forEach_min_max_filter(_inAllocation, _outAllocations[index]);
                 }
                 else if(_rsKernel.equals("Minimum")){
                     _rsMinmax.set_img_in(_inAllocation);
                     _rsMinmax.invoke_setup();
+                    _rsMinmax.set_size(values[0].intValue());
                     _rsMinmax.set_type(1);
                     _rsMinmax.forEach_min_max_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Minimum")){
+                    _rsEdges.set_img_in(_inAllocation);
+                    _rsEdges.invoke_setup();
+                    _rsEdges.forEach_robers_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Roberts")){
+                    _rsEdges.set_img_in(_inAllocation);
+                    _rsEdges.invoke_setup();
+                    _rsEdges.forEach_robers_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Sobel")){
+                    _rsEdges.set_img_in(_inAllocation);
+                    _rsEdges.invoke_setup();
+                    _rsEdges.forEach_sobel_filter(_inAllocation, _outAllocations[index]);
                 }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];
@@ -519,6 +537,7 @@ public class Editor extends AppCompatActivity {
         _rsUnsharpMask = new ScriptC_unsharp_mask(rs);
         _rsFlip = new ScriptC_flip_filter(rs);
         _rsMinmax = new ScriptC_min_max_filter(rs);
+        _rsEdges = new ScriptC_edges_filters(rs);
     }
 
     void UpdateImage(final float f) {
@@ -593,6 +612,9 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Farba olejna")){
                 SetOptionSlider(0,50,1.0f);
             }
+            else if(_optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum")){
+                SetOptionSlider(0,4,0.0f);
+            }
             else{
                 UpdateImage(0.0f);
                 _sliderOptLayout.setVisibility(View.INVISIBLE);
@@ -619,15 +641,16 @@ public class Editor extends AppCompatActivity {
             }
             else if(_optionsLabel.equals("Nasycenie") || _optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Progowanie") ||
                     _optionsLabel.equals("Solaryzacja") || _optionsLabel.equals("Winietowanie") ||
-                    _optionsLabel.equals("Unsharp mask")){
+                    _optionsLabel.equals("Unsharp mask") ){
                 value = (float)progress/100.0f;
             }
             else if(_optionsLabel.equals("Kwantyzacja") || _optionsLabel.equals("Mozaika") || _optionsLabel.equals("Farba olejna") ||
-                _optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom")){
+                _optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom") ){
                 value = progress+1;
             }
             else if(_optionsLabel.equals("Czarne światło") || _optionsLabel.equals("Dekompozycja") || _optionsLabel.equals("1-Kanał") ||
-                    _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie") ){
+                    _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie") ||
+                    _optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum")){
                 value = progress;
             }
             else if(_optionsLabel.equals("Odcień") || _optionsLabel.equals("Temperatura")){
