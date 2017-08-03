@@ -64,10 +64,10 @@ import java.util.ArrayList;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 7, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
+    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 8, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
-    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel"};
+    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel", "Płaskorzeźba"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
             "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
             "Wypełnienie światłem","Poruszenie","Winietowanie",
@@ -128,6 +128,7 @@ public class Editor extends AppCompatActivity {
     ScriptC_flip_filter _rsFlip;
     ScriptC_min_max_filter _rsMinmax;
     ScriptC_edges_filters _rsEdges;
+    ScriptC_emboss_relief_filter _rsEmbossRel;
     //**************************
     RenderScriptTask _currentTask;
     RenderScript rs;
@@ -426,6 +427,12 @@ public class Editor extends AppCompatActivity {
                     _rsEdges.invoke_setup();
                     _rsEdges.forEach_sobel_filter(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Płaskorzeźba")){
+                    _rsEmbossRel.set_img_in(_inAllocation);
+                    _rsEmbossRel.invoke_setup();
+                    _rsEmbossRel.set_mask_type(values[0].intValue());
+                    _rsEmbossRel.forEach_emboss_relief_filter(_inAllocation, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];
                 _currentBitmap = (_currentBitmap + 1) % NUM_BITMAPS;
@@ -538,6 +545,7 @@ public class Editor extends AppCompatActivity {
         _rsFlip = new ScriptC_flip_filter(rs);
         _rsMinmax = new ScriptC_min_max_filter(rs);
         _rsEdges = new ScriptC_edges_filters(rs);
+        _rsEmbossRel = new ScriptC_emboss_relief_filter(rs);
     }
 
     void UpdateImage(final float f) {
@@ -615,6 +623,9 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum")){
                 SetOptionSlider(0,4,0.0f);
             }
+            else if(_optionsLabel.equals("Płaskorzeźba")){
+                SetOptionSlider(0,12,0.0f);
+            }
             else{
                 UpdateImage(0.0f);
                 _sliderOptLayout.setVisibility(View.INVISIBLE);
@@ -650,7 +661,7 @@ public class Editor extends AppCompatActivity {
             }
             else if(_optionsLabel.equals("Czarne światło") || _optionsLabel.equals("Dekompozycja") || _optionsLabel.equals("1-Kanał") ||
                     _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie") ||
-                    _optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum")){
+                    _optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum") || _optionsLabel.equals("Płaskorzeźba")){
                 value = progress;
             }
             else if(_optionsLabel.equals("Odcień") || _optionsLabel.equals("Temperatura")){
