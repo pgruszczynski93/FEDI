@@ -108,6 +108,14 @@
                 android:onClick="ShowDetails"
                 android:text="Szczegóły" />
 
+
+            <Button
+                android:id="@+id/noiseButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="ShowNoise"
+                android:text="Filtry: Szum" />
+
             <Button
                 android:id="@+id/filtersButton"
                 android:layout_width="match_parent"

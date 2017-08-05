@@ -65,7 +65,7 @@ public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
     final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 8, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
-            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5;
+            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 5;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel", "Płaskorzeźba"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
@@ -76,8 +76,10 @@ public class Editor extends AppCompatActivity {
     final String[] _rotationValues = {"Kąt", "90 lewo", "90 prawo", "Przerzuć pion", "Przerzuć poziom"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
     final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
+    final String[] _noiseFiltersValues = {"Szum", "Szum pieprz i sól", "Odszumianie: średnia", "Odszumianie: mediana", "Ulepszone odszumianie"};
 
-//    FediCore _coreOperation;
+
+    //    FediCore _coreOperation;
     final int NUM_BITMAPS = 2, UNSHARP_ALLOCS = 4;
     int _currentBitmap = 0;
     Bitmap[] _bitmapsOut, _tmpBitmaps;
@@ -129,6 +131,8 @@ public class Editor extends AppCompatActivity {
     ScriptC_min_max_filter _rsMinmax;
     ScriptC_edges_filters _rsEdges;
     ScriptC_emboss_relief_filter _rsEmbossRel;
+    ScriptC_noise_filters _rsNoise;
+    ScriptC_denoise_filters _rsDenoise;
     //**************************
     RenderScriptTask _currentTask;
     RenderScript rs;
@@ -138,7 +142,7 @@ public class Editor extends AppCompatActivity {
 
     //tablice: dopasowań, detali, filtrów, balansu bieli
     Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList,
-    _natururalFiltButtonList, _grayScaleButtonList;
+    _natururalFiltButtonList, _grayScaleButtonList, _noiseButtonList;
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
     String _currBottomButton, _prevBottomButton = "", _optionsLabel;
 
@@ -412,11 +416,6 @@ public class Editor extends AppCompatActivity {
                     _rsMinmax.set_type(1);
                     _rsMinmax.forEach_min_max_filter(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("Minimum")){
-                    _rsEdges.set_img_in(_inAllocation);
-                    _rsEdges.invoke_setup();
-                    _rsEdges.forEach_robers_filter(_inAllocation, _outAllocations[index]);
-                }
                 else if(_rsKernel.equals("Roberts")){
                     _rsEdges.set_img_in(_inAllocation);
                     _rsEdges.invoke_setup();
@@ -432,6 +431,24 @@ public class Editor extends AppCompatActivity {
                     _rsEmbossRel.invoke_setup();
                     _rsEmbossRel.set_mask_type(values[0].intValue());
                     _rsEmbossRel.forEach_emboss_relief_filter(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Szum pieprz i sól")){
+                    _rsNoise.set_img_in(_inAllocation);
+                    _rsNoise.invoke_setup();
+                    _rsNoise.set_threshold(values[0]);
+                    _rsNoise.forEach_salt_pepper_noise(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Szum")){
+                    _rsNoise.set_img_in(_inAllocation);
+                    _rsNoise.invoke_setup();
+                    _rsNoise.set_threshold(values[0]);
+                    _rsNoise.forEach_homogeneous_noise(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("Odszumianie: średnia")){
+                    _rsDenoise.set_img_in(_inAllocation);
+                    _rsDenoise.invoke_setup();
+                    _rsDenoise.set_size(values[0].intValue());
+                    _rsDenoise.forEach_average_filter(_inAllocation, _outAllocations[index]);
                 }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];
@@ -546,6 +563,8 @@ public class Editor extends AppCompatActivity {
         _rsMinmax = new ScriptC_min_max_filter(rs);
         _rsEdges = new ScriptC_edges_filters(rs);
         _rsEmbossRel = new ScriptC_emboss_relief_filter(rs);
+        _rsNoise = new ScriptC_noise_filters(rs);
+        _rsDenoise = new ScriptC_denoise_filters(rs);
     }
 
     void UpdateImage(final float f) {
@@ -590,7 +609,8 @@ public class Editor extends AppCompatActivity {
                 SetOptionSlider(0,24,1.0f);
             }
             else if(_optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Poruszenie") || _optionsLabel.equals("Solaryzacja") ||
-                    _optionsLabel.equals("Winietowanie") || _optionsLabel.equals("Unsharp mask")){
+                    _optionsLabel.equals("Winietowanie") || _optionsLabel.equals("Unsharp mask") ||  _optionsLabel.equals("Szum pieprz i sól") ||
+                    _optionsLabel.equals("Szum")){
                 SetOptionSlider(0,100,0.0f);
             }
             else if(_optionsLabel.equals("Nasycenie")){
@@ -623,6 +643,9 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum")){
                 SetOptionSlider(0,4,0.0f);
             }
+            else if(_optionsLabel.equals("Odszumianie: średnia") || _optionsLabel.equals("Odszumianie: mediana")){
+                SetOptionSlider(0,2,0.0f);
+            }
             else if(_optionsLabel.equals("Płaskorzeźba")){
                 SetOptionSlider(0,12,0.0f);
             }
@@ -652,7 +675,7 @@ public class Editor extends AppCompatActivity {
             }
             else if(_optionsLabel.equals("Nasycenie") || _optionsLabel.equals("Wypełnienie światłem") || _optionsLabel.equals("Progowanie") ||
                     _optionsLabel.equals("Solaryzacja") || _optionsLabel.equals("Winietowanie") ||
-                    _optionsLabel.equals("Unsharp mask") ){
+                    _optionsLabel.equals("Unsharp mask") || _optionsLabel.equals("Szum pieprz i sól") || _optionsLabel.equals("Szum")){
                 value = (float)progress/100.0f;
             }
             else if(_optionsLabel.equals("Kwantyzacja") || _optionsLabel.equals("Mozaika") || _optionsLabel.equals("Farba olejna") ||
@@ -661,7 +684,8 @@ public class Editor extends AppCompatActivity {
             }
             else if(_optionsLabel.equals("Czarne światło") || _optionsLabel.equals("Dekompozycja") || _optionsLabel.equals("1-Kanał") ||
                     _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie") ||
-                    _optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum") || _optionsLabel.equals("Płaskorzeźba")){
+                    _optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum") || _optionsLabel.equals("Płaskorzeźba") ||
+                    _optionsLabel.equals("Odszumianie: średnia") || _optionsLabel.equals("Odszumianie: mediana")){
                 value = progress;
             }
             else if(_optionsLabel.equals("Odcień") || _optionsLabel.equals("Temperatura")){
@@ -959,7 +983,9 @@ public class Editor extends AppCompatActivity {
     public void ShowAdjustments(View v){
         FillButtons("adjustments", _adjustmentsButtonsList, _adjustmentValues, ADJUSTMENT_COUNT);
     }
-
+    public void ShowNoise(View v){
+        FillButtons("noise", _noiseButtonList, _noiseFiltersValues, NOISE_COUNT);
+    }
     public void ShowDetails(View v){
         FillButtons("details", _detailsButtonList, _detailsValues, DETAILS_COUNT);
     }
