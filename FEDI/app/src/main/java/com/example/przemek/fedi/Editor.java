@@ -65,7 +65,7 @@ public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
     final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 8, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
-            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 5;
+            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 4;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel", "Płaskorzeźba"};
     final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
@@ -76,7 +76,7 @@ public class Editor extends AppCompatActivity {
     final String[] _rotationValues = {"Kąt", "90 lewo", "90 prawo", "Przerzuć pion", "Przerzuć poziom"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
     final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
-    final String[] _noiseFiltersValues = {"Szum", "Szum pieprz i sól", "Odszumianie: średnia", "Odszumianie: mediana", "Ulepszone odszumianie"};
+    final String[] _noiseFiltersValues = {"Szum", "Szum pieprz i sól", "Odszumianie: średnia", "Odszumianie: mediana"};
 
 
     //    FediCore _coreOperation;
@@ -450,6 +450,12 @@ public class Editor extends AppCompatActivity {
                     _rsDenoise.set_size(values[0].intValue());
                     _rsDenoise.forEach_average_filter(_inAllocation, _outAllocations[index]);
                 }
+                else if(_rsKernel.equals("Odszumianie: mediana")){
+                    _rsDenoise.set_img_in(_inAllocation);
+                    _rsDenoise.invoke_setup();
+                    _rsDenoise.set_size(values[0].intValue());
+                    _rsDenoise.forEach_median_filter(_inAllocation, _outAllocations[index]);
+                }
                 _outAllocations[index].copyTo(_bitmapsOut[index]);
                 _resultBitmap = _bitmapsOut[index];
                 _currentBitmap = (_currentBitmap + 1) % NUM_BITMAPS;
@@ -625,7 +631,7 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Czarne światło")){
                 SetOptionSlider(0,6,1.0f);
             }
-            else if(_optionsLabel.equals("Dekompozycja")) {
+            else if(_optionsLabel.equals("Dekompozycja") ||  _optionsLabel.equals("Odszumianie: mediana")) {
                 SetOptionSlider(0,1,0.0f);
             }
             else if(_optionsLabel.equals("Gamma")){
@@ -643,7 +649,7 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum")){
                 SetOptionSlider(0,4,0.0f);
             }
-            else if(_optionsLabel.equals("Odszumianie: średnia") || _optionsLabel.equals("Odszumianie: mediana")){
+            else if(_optionsLabel.equals("Odszumianie: średnia")){
                 SetOptionSlider(0,2,0.0f);
             }
             else if(_optionsLabel.equals("Płaskorzeźba")){

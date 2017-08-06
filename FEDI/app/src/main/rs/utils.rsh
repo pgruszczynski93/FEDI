@@ -55,4 +55,27 @@ static inline float GetU(const float3 rgb) {
 static inline float GetV(const float3 rgb) {
     return rgb.r * 0.615f - rgb.g * 0.515f - rgb.b * 0.100f;
 }
+
+static void sort(float* tab, int32_t size){
+    int32_t counter;
+    do{
+        counter = 0;
+        for(int32_t i=0; i<size-1; i++){
+            if(tab[i] > tab[i+1]){
+                float tmp = tab[i];
+                tab[i] = tab[i+1];
+                tab[i+1] = tmp;
+                ++counter;
+            }
+        }
+    }
+    while(counter != 0);
+}
+
+static void clear_array(float *tab, int32_t size){
+    for(int32_t i=0; i<size; i++){
+        tab[i] = 0.0f;
+    }
+}
+
 #endif
