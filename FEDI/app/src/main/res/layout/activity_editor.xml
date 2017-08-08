@@ -181,6 +181,7 @@
             android:layout_above="@+id/bottomScrollPanel"
             android:layout_alignParentEnd="true"
             android:layout_weight="1"
+            android:onClick="CancelAdjustment"
             android:text="Anuluj" />
 
         <Button
@@ -211,6 +212,7 @@
             android:layout_above="@+id/bottomScrollPanel"
             android:layout_alignParentStart="true"
             android:layout_weight="1"
+            android:onClick="SaveAdjustment"
             android:text="OK" />
     </LinearLayout>
 

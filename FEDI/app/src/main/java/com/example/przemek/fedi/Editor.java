@@ -1,16 +1,18 @@
 package com.example.przemek.fedi;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -22,6 +24,7 @@ import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.ScriptIntrinsicBlend;
 import android.support.v8.renderscript.ScriptIntrinsicBlur;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,7 +33,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,16 +51,6 @@ import java.util.ArrayList;
  * Klasa aktywności Edytora zdjęć.
  *
  */
-
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
 ///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
 ///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
 public class Editor extends AppCompatActivity {
@@ -157,8 +149,8 @@ public class Editor extends AppCompatActivity {
     public ZoomPinchImageView _zoomPinchImageView;
     Intent _launchedIntent;
 
-    Uri _imageUri = null;
-    boolean _intentHasExtras;
+    Uri _imageUri = null, _prevUri, _currUri;
+    boolean _intentHasExtras, _processed;
 
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
 
@@ -502,6 +494,7 @@ public class Editor extends AppCompatActivity {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
                     // tutaj wstawic zpisywanies
+                    SaveBitmap(_resultBitmap);
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
                     //No button clicked
@@ -571,6 +564,17 @@ public class Editor extends AppCompatActivity {
         _rsEmbossRel = new ScriptC_emboss_relief_filter(rs);
         _rsNoise = new ScriptC_noise_filters(rs);
         _rsDenoise = new ScriptC_denoise_filters(rs);
+    }
+
+    void DestroyScript(){
+        _inAllocation.destroy();
+        _orgImageAlloc.destroy();
+        _unsharpBlurAlloc.destroy();
+        _unsharpContrastAlloc.destroy();
+        _unsharpDiffAllc.destroy();
+        for (int i = 0; i < NUM_BITMAPS; ++i) {
+            _outAllocations[i].destroy();
+        }
     }
 
     void UpdateImage(final float f) {
@@ -659,6 +663,7 @@ public class Editor extends AppCompatActivity {
                 UpdateImage(0.0f);
                 _sliderOptLayout.setVisibility(View.INVISIBLE);
             }
+
         }
     };
 
@@ -716,9 +721,9 @@ public class Editor extends AppCompatActivity {
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
             ///tymczasowo -----------------------------------------------
-            _history.add(_resultBitmap);
-
-            Toast.makeText(getApplicationContext(),"Historia "+_history.size(), Toast.LENGTH_LONG).show();
+//            _history.add(_resultBitmap);
+            _processed = true;
+            Toast.makeText(getApplicationContext(),"Przetworzono ", Toast.LENGTH_LONG).show();
 //            if(_history.size() > 0){
 //                _zoomPinchImageView.SetBitmap(_history.get(_history.size() - 1));
 //                ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -746,6 +751,7 @@ public class Editor extends AppCompatActivity {
 
        // _imageView = (ImageView)findViewById(R.id.imageView2);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
+        _processed = false; // flaga iformujaca o tym czy zdjecie zostalo w jakikolwiek sposob przetworzeone
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
@@ -806,8 +812,14 @@ public class Editor extends AppCompatActivity {
     }
     void InitRenderScriptOps(){
 
+        //usuwac zdjecie po przetworzeniu
+
         try{
-            _inputBitmap = GetBitmapFromUri(_imageUri);
+            Toast.makeText(this, "Status "+_processed, Toast.LENGTH_SHORT).show();
+            _inputBitmap = (_processed) ?  GetBitmapFromUri(GetImageUri(this,_resultBitmap)): GetBitmapFromUri(_imageUri);
+           // if(_processed){
+             //   _currUri = GetImageUri(this,_resultBitmap);
+            //}
         }
         catch (IOException e){
             e.printStackTrace();
@@ -824,14 +836,14 @@ public class Editor extends AppCompatActivity {
                     _inputBitmap.getHeight(), _inputBitmap.getConfig());
         }
 
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        _bitmapsOut[_currentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
-        Glide.with(this)
-                .load(stream.toByteArray())
-                .asBitmap()
-                .diskCacheStrategy( DiskCacheStrategy.NONE )
-                .skipMemoryCache( false )
-                .into(_zoomPinchImageView);
+//        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//        _bitmapsOut[_currentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
+//        Glide.with(this)
+//                .load(stream.toByteArray())
+//                .asBitmap()
+//                .diskCacheStrategy( DiskCacheStrategy.NONE )
+//                .skipMemoryCache( false )
+//                .into(_zoomPinchImageView);
 
 
 //        _zoomPinchImageView.SetBitmap(_bitmapsOut[_currentBitmap]);
@@ -840,22 +852,39 @@ public class Editor extends AppCompatActivity {
     }
 
     void SaveBitmap(Bitmap bmp){
-        FileOutputStream out = null;
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "FEDI");
+        File mypath=new File(directory,"FEDI_"+ System.currentTimeMillis() +".jpg");
+
+        FileOutputStream fos = null;
         try {
-            out = new FileOutputStream("aa");
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
-            // PNG is a lossless format, the compression factor (100) is ignored
-        } catch (Exception e) {
+            if(!directory.exists()){
+                directory.mkdirs();
+            }
+            fos = new FileOutputStream(mypath);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+        }
+        catch (Exception e) {
             e.printStackTrace();
-        } finally {
+        }
+        finally {
             try {
-                if (out != null) {
-                    out.close();
-                }
-            } catch (IOException e) {
+                fos.flush();
+                fos.close();
+            }
+            catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+        MediaScannerConnection.scanFile(this,
+            new String[] { mypath.getAbsolutePath().toString() }, null,
+            new MediaScannerConnection.OnScanCompletedListener() {
+                public void onScanCompleted(String path, Uri uri) {
+                    Log.i("ExternalStorage", "Scanned " + path + ":");
+                    Log.i("ExternalStorage", "-> uri=" + uri);
+                }
+            });
     }
 
     private Bitmap loadBitmap(int resource) {
@@ -1014,6 +1043,21 @@ public class Editor extends AppCompatActivity {
         FillButtons("grayscale", _grayScaleButtonList, _grayscalesValues, GRAYSCALE_COUNT);
     }
 
+    public void SaveAdjustment(View v){
+        //DestroyScript();
+    }
+
+    public void CancelAdjustment(View v){
+        //_processed = false;
+        try{
+            Toast.makeText(this, "RESET ZD ", Toast.LENGTH_SHORT).show();
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+    }
 
     void ShowHistogram(View v){
         Toast.makeText(this, "dupa", Toast.LENGTH_SHORT).show();

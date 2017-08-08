@@ -6,6 +6,7 @@
 
     <application
         android:allowBackup="true"
+        android:largeHeap="true"
         android:icon="@mipmap/fedi_logo"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/fedi_logo"
