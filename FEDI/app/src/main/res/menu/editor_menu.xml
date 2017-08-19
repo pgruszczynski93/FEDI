@@ -5,7 +5,11 @@
         android:id="@+id/action_open"
         android:title="@string/action_open"
         app:showAsAction="always" />
-
+    <item
+        android:id="@+id/action_preview"
+        android:icon="@mipmap/review"
+        android:title="Podgląd"
+        app:showAsAction="always" />
     <item
         android:id="@+id/action_img_info"
         android:icon="@mipmap/info"

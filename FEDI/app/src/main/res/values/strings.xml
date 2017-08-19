@@ -4,6 +4,7 @@
     <string name="action_resolution">Rozdzielczość</string>
     <string name="action_reset_scale">Do ekranu</string>
     <string name="action_current_scale">Przybliżenie</string>
+    <string name="action_preview">Przybliżenie</string>
     <string name="action_save">Zapisz</string>
     <string name="action_options">Opcje</string>
     <string name="action_open">Otwórz</string>

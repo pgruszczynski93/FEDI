@@ -27,11 +27,13 @@ import android.support.v8.renderscript.ScriptIntrinsicBlur;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -45,6 +47,7 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /***
@@ -52,23 +55,23 @@ import java.util.ArrayList;
  *
  */
 ///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
-///PAMIETAC O ZWALNIANIU PAMIECI W ALOKACJIACH .DESTROY()
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 7, DETAILS_COUNT = 8, FILTERS_COUNT = 20, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 5,
-            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 4;
-    final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie","Gamma", "Prześwietlenia", "Cienie", "Temperatura"};
+    final int ADJUSTMENT_COUNT = 8, DETAILS_COUNT = 8, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 4,
+            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 4, BLUR_COUNT = 3, HISTOGRAM_COUNT = 3;
+    final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie", "Gamma", "Wypełnienie światłem", "Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel", "Płaskorzeźba"};
-    final String[] _filtersValues = {"Negatyw", "Sepia", "Progowanie", "Rozmycie", "Bloom", "Czarne światło","Zamiana kanału","Gamma",
-            "Solaryzacja","Kropkowanie","Kwantyzacja","Mozaika","Farba olejna",
-            "Wypełnienie światłem","Poruszenie","Winietowanie",
-            "Soft glow","Wyrównanie histogramu","Rozciągnięcie histogramu","F1"};
-    final String[] _whiteBalanceValues = {"Temperatura - Kelvin", "Odcień"};
-    final String[] _rotationValues = {"Kąt", "90 lewo", "90 prawo", "Przerzuć pion", "Przerzuć poziom"};
+    final String[] _filtersValues = {"Wypełnienie światłem", "Winietowanie", "Negatyw", "Solaryzacja",
+            "Sepia", "Bloom", "Soft glow", "Mozaika", "Farba olejna", "Zamiana kanału",
+            "Kwantyzacja", "Poruszenie", "Czarne światło", "Kropkowanie", "Progowanie"};
+    final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
+    final String[] _rotationValues = {"90 lewo", "90 prawo", "Przerzuć pion", "Przerzuć poziom"};
     final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
     final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
     final String[] _noiseFiltersValues = {"Szum", "Szum pieprz i sól", "Odszumianie: średnia", "Odszumianie: mediana"};
+    final String[] _blurFiltersValues = {"Rozmycie", "Rozmycie: średnia", "Rozmycie: mediana"};
+    final String[] _histogramFiltersValues = {"Histogram","Wyrównanie","Rozciągnięcie"};
 
 
     //    FediCore _coreOperation;
@@ -129,12 +132,12 @@ public class Editor extends AppCompatActivity {
     RenderScriptTask _currentTask;
     RenderScript rs;
 
-    Bitmap _inputBitmap, _resultBitmap;
+    Bitmap _inputBitmap, _resultBitmap, _bitmapToRemove;
 
 
     //tablice: dopasowań, detali, filtrów, balansu bieli
     Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList,
-    _natururalFiltButtonList, _grayScaleButtonList, _noiseButtonList;
+    _natururalFiltButtonList, _grayScaleButtonList, _noiseButtonList, _blurButtonList, _histogramButtonList;
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
     String _currBottomButton, _prevBottomButton = "", _optionsLabel;
 
@@ -149,15 +152,15 @@ public class Editor extends AppCompatActivity {
     public ZoomPinchImageView _zoomPinchImageView;
     Intent _launchedIntent;
 
-    Uri _imageUri = null, _prevUri, _currUri;
+    Uri _imageUri = null, _prevUri=null, _currUri, _copiedUri;
     boolean _intentHasExtras, _processed;
 
+    int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
 
     private class RenderScriptTask extends AsyncTask<Float, Void, Integer> {
         Boolean _issued = false;
         String _rsKernel;
-        Allocation _rotateAllocation;
 
         public RenderScriptTask(String rsKernel){
             _rsKernel = rsKernel;
@@ -197,7 +200,7 @@ public class Editor extends AppCompatActivity {
                 }
                 else if(_rsKernel.equals("Bloom")){
                     // poprawic tego blooma - nie dziala zmianaspolczynnika swiatala;  wspolcznnik dobrany doswiadczalnie
-                    _rsBloom.set_brightTreshold(values[0]/100.0f + 0.33f);
+                    _rsBloom.set_brightTreshold(values[0]/100.0f + 0.25f);
                     _rsBloom.forEach_bloom_bright_pass(_inAllocation, _outAllocations[index]);
 
                     _rsBlur.setRadius(values[0]);
@@ -230,10 +233,6 @@ public class Editor extends AppCompatActivity {
                     _rsLightManager.set_light_value(values[0]);
                     _rsLightManager.set_light_mode(false);
                     _rsLightManager.forEach_light_add_sub(_inAllocation, _outAllocations[index]);
-                }
-                else if(_rsKernel.equals("Temperatura - Kelvin")){
-                    _rsKelvinTemp.set_kelvin_value(values[0]*200);
-                    _rsKelvinTemp.forEach_kelvin_temperature(_inAllocation, _outAllocations[index]);
                 }
                 else if(_rsKernel.equals("Atmosfera")){
                     _rsAtmosphere.forEach_atmosphere_filter(_inAllocation, _outAllocations[index]);
@@ -333,7 +332,7 @@ public class Editor extends AppCompatActivity {
                     _rsSoftGlow.set_height(_inputBitmap.getHeight());
                     _rsSoftGlow.forEach_soft_glow(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("Wyrównanie histogramu")){
+                else if(_rsKernel.equals("Wyrównanie")){
                     _rsHistogramEq.set_size(_inputBitmap.getHeight() * _inputBitmap.getWidth());
                     _rsHistogramEq.invoke_setup();
                     _rsHistogramEq.forEach_equalize_histogram_rgbyuv(_inAllocation, _outAllocations[index]);
@@ -341,7 +340,7 @@ public class Editor extends AppCompatActivity {
                     _rsHistogramEq.forEach_equalize_histogram_yuvrgb(_outAllocations[index], _inAllocation);
                     _outAllocations[index] = _inAllocation;
                 }
-                else if(_rsKernel.equals("Rozciągnięcie histogramu")){
+                else if(_rsKernel.equals("Rozciągnięcie")){
                     _rsHistogramSt.set_img_in(_inAllocation);
                     _rsHistogramSt.set_img_out(_outAllocations[index]);
                     _rsHistogramSt.invoke_setup();
@@ -436,13 +435,13 @@ public class Editor extends AppCompatActivity {
                     _rsNoise.set_threshold(values[0]);
                     _rsNoise.forEach_homogeneous_noise(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("Odszumianie: średnia")){
+                else if(_rsKernel.equals("Odszumianie: średnia") || _rsKernel.equals("Rozmycie: średnia") ){
                     _rsDenoise.set_img_in(_inAllocation);
                     _rsDenoise.invoke_setup();
                     _rsDenoise.set_size(values[0].intValue());
                     _rsDenoise.forEach_average_filter(_inAllocation, _outAllocations[index]);
                 }
-                else if(_rsKernel.equals("Odszumianie: mediana")){
+                else if(_rsKernel.equals("Odszumianie: mediana") || _rsKernel.equals("Rozmycie: mediana")){
                     _rsDenoise.set_img_in(_inAllocation);
                     _rsDenoise.invoke_setup();
                     _rsDenoise.set_size(values[0].intValue());
@@ -494,7 +493,24 @@ public class Editor extends AppCompatActivity {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
                     // tutaj wstawic zpisywanies
-                    SaveBitmap(_resultBitmap);
+                    if(_resultBitmap != null)
+                        SaveBitmap(_resultBitmap);
+                    else
+                        Toast.makeText(Editor.this, "Nie wprowadzono zmian!", Toast.LENGTH_SHORT).show();
+                    break;
+                case DialogInterface.BUTTON_NEGATIVE:
+                    //No button clicked
+                    break;
+            }
+        }
+    };
+
+    DialogInterface.OnClickListener _changeOptionListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case DialogInterface.BUTTON_POSITIVE:
+
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
                     //No button clicked
@@ -566,16 +582,6 @@ public class Editor extends AppCompatActivity {
         _rsDenoise = new ScriptC_denoise_filters(rs);
     }
 
-    void DestroyScript(){
-        _inAllocation.destroy();
-        _orgImageAlloc.destroy();
-        _unsharpBlurAlloc.destroy();
-        _unsharpContrastAlloc.destroy();
-        _unsharpDiffAllc.destroy();
-        for (int i = 0; i < NUM_BITMAPS; ++i) {
-            _outAllocations[i].destroy();
-        }
-    }
 
     void UpdateImage(final float f) {
         if (_currentTask != null) {
@@ -629,9 +635,6 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Progowanie")){
                 SetOptionSlider(50,100,0.5f);
             }
-            else if(_optionsLabel.equals("Temperatura - Kelvin")){
-                UpdateImage(8000.0f);
-            }
             else if(_optionsLabel.equals("Czarne światło")){
                 SetOptionSlider(0,6,1.0f);
             }
@@ -660,6 +663,7 @@ public class Editor extends AppCompatActivity {
                 SetOptionSlider(0,12,0.0f);
             }
             else{
+                _processed = true;
                 UpdateImage(0.0f);
                 _sliderOptLayout.setVisibility(View.INVISIBLE);
             }
@@ -671,6 +675,7 @@ public class Editor extends AppCompatActivity {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        //_copiedUri = Uri.parse(path);
         return Uri.parse(path);
     }
     /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TESTOWO!!!!!!!!!!!!!!!!!!! */
@@ -705,9 +710,6 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie")){
                 value = (((float)((progress - 100)>>2))/100.0f);
             }
-            else if(_optionsLabel.equals("Temperatura - Kelvin")){
-                value = progress*200;
-            }
             else if(_optionsLabel.equals("Gamma")){
                 value = ((float)(progress+1)/100.0f);
             }
@@ -723,7 +725,7 @@ public class Editor extends AppCompatActivity {
             ///tymczasowo -----------------------------------------------
 //            _history.add(_resultBitmap);
             _processed = true;
-            Toast.makeText(getApplicationContext(),"Przetworzono ", Toast.LENGTH_LONG).show();
+            //Toast.makeText(getApplicationContext(),"Przetworzono ", Toast.LENGTH_LONG).show();
 //            if(_history.size() > 0){
 //                _zoomPinchImageView.SetBitmap(_history.get(_history.size() - 1));
 //                ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -751,7 +753,6 @@ public class Editor extends AppCompatActivity {
 
        // _imageView = (ImageView)findViewById(R.id.imageView2);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
-        _processed = false; // flaga iformujaca o tym czy zdjecie zostalo w jakikolwiek sposob przetworzeone
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
@@ -778,6 +779,23 @@ public class Editor extends AppCompatActivity {
         switch (item.getItemId()){
             case R.id.action_img_info:
                 CheckGetInfoUriPermission();
+                return true;
+            case R.id.action_preview:
+//                item.setActionView(new Button(this));
+//                item.getActionView().setOnTouchListener(new View.OnTouchListener(){
+//                    @Override
+//                    public boolean onTouch(View v, MotionEvent event) {
+//                        switch(event.getAction()) {
+//                            case MotionEvent.ACTION_DOWN:
+//                                //kod tutaj
+//                                break;
+//                            case MotionEvent.ACTION_UP:
+//                                //kod tutaj
+//                                break;
+//                        }
+//                        return false;
+//                    }
+//                });
                 return true;
             case R.id.action_open:
                 ShowAlert("Zmiany zostaną utracone. Kontynuować?",_dialogClickListener);
@@ -810,32 +828,43 @@ public class Editor extends AppCompatActivity {
 //
         }
     }
-    void InitRenderScriptOps(){
+
+    void InitRenderScriptOps() {
 
         //usuwac zdjecie po przetworzeniu
 
-        try{
-            Toast.makeText(this, "Status "+_processed, Toast.LENGTH_SHORT).show();
-            _inputBitmap = (_processed) ?  GetBitmapFromUri(GetImageUri(this,_resultBitmap)): GetBitmapFromUri(_imageUri);
-           // if(_processed){
-             //   _currUri = GetImageUri(this,_resultBitmap);
+        try {
+            Toast.makeText(this, "Status " + _processed, Toast.LENGTH_SHORT).show();
+//            if (_processed) {
+//                if (!_currUri.equals(_prevUri)) {
+//                    _prevUri = _currUri;
+//                }
+//                _currUri = GetImageUri(this, _resultBitmap);
+//                _inputBitmap = GetBitmapFromUri(_currUri);
+//            } else {
+//                _inputBitmap = GetBitmapFromUri((_prevUri != null) ? _prevUri : _imageUri);
+//            }
+            //_inputBitmap = (_processed) ?  GetBitmapFromUri(GetImageUri(this,_resultBitmap)): GetBitmapFromUri(_imageUri);
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+            // if(_processed){
+            //   _currUri = GetImageUri(this,_resultBitmap);
             //}
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        _bitmapsOut = new Bitmap[NUM_BITMAPS];
-        _tmpBitmaps = new Bitmap[UNSHARP_ALLOCS];
-        for (int i = 0; i < NUM_BITMAPS; ++i) {
-            _bitmapsOut[i] = Bitmap.createBitmap(_inputBitmap.getWidth(),
-                    _inputBitmap.getHeight(), _inputBitmap.getConfig());
+        if (_initCounter < 1){
+            _bitmapsOut = new Bitmap[NUM_BITMAPS];
+            _tmpBitmaps = new Bitmap[UNSHARP_ALLOCS];
+            for (int i = 0; i < NUM_BITMAPS; ++i) {
+                _bitmapsOut[i] = Bitmap.createBitmap(_inputBitmap.getWidth(),
+                        _inputBitmap.getHeight(), _inputBitmap.getConfig());
+            }
+            for (int i = 0; i < UNSHARP_ALLOCS; ++i) {
+                _tmpBitmaps[i] = Bitmap.createBitmap(_inputBitmap.getWidth(),
+                        _inputBitmap.getHeight(), _inputBitmap.getConfig());
+            }
         }
-        for (int i = 0; i < UNSHARP_ALLOCS; ++i) {
-            _tmpBitmaps[i] = Bitmap.createBitmap(_inputBitmap.getWidth(),
-                    _inputBitmap.getHeight(), _inputBitmap.getConfig());
-        }
-
 //        ByteArrayOutputStream stream = new ByteArrayOutputStream();
 //        _bitmapsOut[_currentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
 //        Glide.with(this)
@@ -848,9 +877,10 @@ public class Editor extends AppCompatActivity {
 
 //        _zoomPinchImageView.SetBitmap(_bitmapsOut[_currentBitmap]);
         _currentBitmap += (_currentBitmap + 1) % NUM_BITMAPS;
-
+        ++_initCounter;
     }
 
+    //podzielic te metode na inne metody
     void SaveBitmap(Bitmap bmp){
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
         File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "FEDI");
@@ -881,10 +911,10 @@ public class Editor extends AppCompatActivity {
             new String[] { mypath.getAbsolutePath().toString() }, null,
             new MediaScannerConnection.OnScanCompletedListener() {
                 public void onScanCompleted(String path, Uri uri) {
-                    Log.i("ExternalStorage", "Scanned " + path + ":");
-                    Log.i("ExternalStorage", "-> uri=" + uri);
                 }
             });
+
+        Toast.makeText(this,"Zapisano pomyślnie!", Toast.LENGTH_SHORT).show();
     }
 
     private Bitmap loadBitmap(int resource) {
@@ -945,15 +975,22 @@ public class Editor extends AppCompatActivity {
             _imageUri = (_intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
 //            Glide.with(this).load(_imageUri).centerCrop().into(_zoomPinchImageView); //uzywane jako thumbnail
 //
+            //SetReducedImageSize();
 
             Glide
                     .with( this )
                     .load(_imageUri)
                     .diskCacheStrategy( DiskCacheStrategy.NONE )
                     .skipMemoryCache( true )
+                   // .override(1920,1080)
+                   // .fitCenter()
                     .into( _zoomPinchImageView);
 
+            _processed = false; // flaga iformujaca o tym czy zdjecie zostalo w jakikolwiek sposob przetworzeone
+
             _zoomPinchImageView.SetImgUri(_imageUri);
+
+            _currUri = _imageUri;
         }
     }
 
@@ -979,6 +1016,9 @@ public class Editor extends AppCompatActivity {
             _sliderOptLayout.setVisibility(View.INVISIBLE);
         }
         else{
+            //{POPTRAWIC TUTAJS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//            ShowAlert("Zapisać zmiany w grupie \""+_prevBottomButton
+//                    +"\"?",_changeOptionListener);
             _optionsLayout.setVisibility(View.VISIBLE);
             if(!_currBottomButton.equals(_prevBottomButton)){
                 _sliderOptLayout.setVisibility(View.INVISIBLE);
@@ -1030,18 +1070,24 @@ public class Editor extends AppCompatActivity {
     public void ShowWhiteBalance(View v){
         FillButtons("whitebalance", _wbButtonList, _whiteBalanceValues, WHITE_BALANCE_COUNT);
     }
-
     public void ShowRotation(View v){
         FillButtons("rotation", _rotationButtonList, _rotationValues, ROTATIONS_COUNT);
     }
-
     public void ShowNaturalFilters(View v){
         FillButtons("naturalfilters", _natururalFiltButtonList, _naturalFiltersValues, NATURALFILTERS_COUNT);
     }
-
     public void ShowGrayscaleFilters(View v){
         FillButtons("grayscale", _grayScaleButtonList, _grayscalesValues, GRAYSCALE_COUNT);
     }
+    public void ShowBlurFilters(View v){
+        FillButtons("blur", _blurButtonList, _blurFiltersValues, BLUR_COUNT);
+    }
+    public void ShowHistogram(View v){
+        FillButtons("histogram_filters", _histogramButtonList, _histogramFiltersValues, HISTOGRAM_COUNT);
+
+    }
+
+
 
     public void SaveAdjustment(View v){
         //DestroyScript();
@@ -1059,9 +1105,26 @@ public class Editor extends AppCompatActivity {
 
     }
 
-    void ShowHistogram(View v){
-        Toast.makeText(this, "dupa", Toast.LENGTH_SHORT).show();
-    }
+//    void SetReducedImageSize(){
+//        int newImageWidth = _zoomPinchImageView.getWidth();
+//        int newImageHeight = _zoomPinchImageView.getHeight();
+//        int orgImageWidth, orgImageHeight, scaleFactor;
+//
+//        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+//        // w razie czego podmienic _imageuri)
+//        File tmpImg = new File(_imageUri.getPath());
+//        bmOptions.inJustDecodeBounds = true;
+//        BitmapFactory.decodeFile(tmpImg.getAbsolutePath(), bmOptions);
+//        tmpImg.delete();
+//        orgImageHeight = bmOptions.outHeight;
+//        orgImageWidth = bmOptions.outWidth;
+//        scaleFactor = Math.min(orgImageWidth/newImageWidth, orgImageHeight/newImageHeight);
+//        bmOptions.inSampleSize = scaleFactor;
+//        bmOptions.inJustDecodeBounds = false;
+//
+//        Bitmap scaledBitmap = BitmapFactory.decodeFile(_imageUri.toString(), bmOptions);
+//    }
+
 
     /***
      * Metoda odpowiedzialna za zresetowanie skali zdjęcia.
@@ -1089,8 +1152,36 @@ public class Editor extends AppCompatActivity {
         ParcelFileDescriptor parcelFileDescriptor = getContentResolver().openFileDescriptor(uri,"r");
         FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
         Bitmap bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+
+        int bmpH = bitmap.getHeight(), bmpW = bitmap.getWidth();
         parcelFileDescriptor.close();
-        return bitmap;
+
+        if(bmpH >= 2000 || bmpW >=2000){
+            int newHeight = 2000, newWidth;
+            float aspectRatio = (bmpW > bmpH) ? ((float)bmpW/(float)bmpH) : ((float)bmpW/(float)bmpH);
+            //wtedy skaluje
+            newWidth = Math.round(newHeight*aspectRatio);
+            Toast.makeText(this, "Res "+newHeight+" "+newWidth,Toast.LENGTH_SHORT).show();
+
+            //final BitmapFactory.Options options = new BitmapFactory.Options();
+            //options.inJustDecodeBounds = true;
+            //File tmpImg = new File(_imageUri.getPath());
+            //BitmapFactory.decodeFile(tmpImg.getAbsolutePath(),options);
+            //tmpImg.delete();
+
+            // Calculate inSampleSize
+            //options.inSampleSize = Math.min(bitmap.getWidth()/newWidth, bitmap.getHeight()/newHeight);
+
+            // Decode bitmap with inSampleSize set
+//        options.inJustDecodeBounds = false;
+//        return BitmapFactory.decodeResource(res, resId, options);
+
+            return  Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
+        }
+        else{
+            Toast.makeText(this, "Res "+bmpH+" "+bmpW,Toast.LENGTH_SHORT).show();
+            return bitmap;
+        }
     }
 
     //dodać sprawdzanie orientacji zdjecia po zrobieniu go
