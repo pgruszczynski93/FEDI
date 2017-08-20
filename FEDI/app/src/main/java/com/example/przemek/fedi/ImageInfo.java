@@ -96,7 +96,7 @@ public class ImageInfo extends AppCompatActivity {
             }
             catch(IOException e){
                 e.printStackTrace();
-                Toast.makeText(this, "Error!", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Nie można pobrać informacji o zdjęciu!", Toast.LENGTH_LONG).show();
             }
         }
     }

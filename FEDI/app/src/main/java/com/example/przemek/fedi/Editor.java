@@ -1127,26 +1127,6 @@ public class Editor extends AppCompatActivity {
 
     }
 
-//    void SetReducedImageSize(){
-//        int newImageWidth = _zoomPinchImageView.getWidth();
-//        int newImageHeight = _zoomPinchImageView.getHeight();
-//        int orgImageWidth, orgImageHeight, scaleFactor;
-//
-//        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-//        // w razie czego podmienic _imageuri)
-//        File tmpImg = new File(_imageUri.getPath());
-//        bmOptions.inJustDecodeBounds = true;
-//        BitmapFactory.decodeFile(tmpImg.getAbsolutePath(), bmOptions);
-//        tmpImg.delete();
-//        orgImageHeight = bmOptions.outHeight;
-//        orgImageWidth = bmOptions.outWidth;
-//        scaleFactor = Math.min(orgImageWidth/newImageWidth, orgImageHeight/newImageHeight);
-//        bmOptions.inSampleSize = scaleFactor;
-//        bmOptions.inJustDecodeBounds = false;
-//
-//        Bitmap scaledBitmap = BitmapFactory.decodeFile(_imageUri.toString(), bmOptions);
-//    }
-
 
     /***
      * Metoda odpowiedzialna za zresetowanie skali zdjęcia.

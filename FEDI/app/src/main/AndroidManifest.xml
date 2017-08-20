@@ -29,7 +29,8 @@
         <activity
             android:name=".Info"
             android:configChanges="orientation"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.CustomDialogTheme"/>
         <activity
             android:name=".Editor"
             android:configChanges="orientation"
