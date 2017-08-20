@@ -8,6 +8,7 @@ import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -38,6 +39,8 @@ public class MainMenu extends AppCompatActivity {
      */
     static final int CAMERA_ACTIVITY_RESULT = 0, EXTERNAL_STORAGE_RESULT = 1, MAIN_MENU_REQUEST_CODE = 0;
 
+    boolean _doubleBackToExitPressedOnce;
+
     /***
      * Obiekt będący refenencją do okrągłego menu;
      * Ladowana intencja z menu;
@@ -59,17 +62,6 @@ public class MainMenu extends AppCompatActivity {
         setContentView(R.layout.activity_main_menu);
 
         InstantiateCircleMenu();
-    }
-
-    /***
-     * Metoda odpowiedzialna za przechwytywanie działań przy użyciu przycisku WSTECZ
-     */
-    @Override
-    public void onBackPressed() {
-        if (_circleMenu.isOpened())
-            _circleMenu.closeMenu();
-        else
-            finish();
     }
 
 
@@ -202,6 +194,32 @@ public class MainMenu extends AppCompatActivity {
             Intent editorIntent = new Intent(getApplicationContext(), Editor.class);
             editorIntent.putExtra("IMAGE_TAKEN",_currentPhotoPath);
             startActivityForResult(editorIntent, MAIN_MENU_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if (_circleMenu.isOpened())
+            _circleMenu.closeMenu();
+        else{
+            if (_doubleBackToExitPressedOnce) {
+                super.onBackPressed();
+                return;
+            }
+
+            _doubleBackToExitPressedOnce = true;
+            Toast.makeText(this, "Wciśnij WSTECZ ponownie, aby wyjść.", Toast.LENGTH_SHORT).show();
+
+            new Handler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    _doubleBackToExitPressedOnce=false;
+                }
+            }, 2000);
+
+            //finish();
         }
     }
 
