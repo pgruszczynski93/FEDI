@@ -478,7 +478,10 @@ public class Editor extends AppCompatActivity {
         public void onClick(DialogInterface dialog, int which) {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
-                    OpenImageBrowser();
+                  //  finish();
+                    //OpenImageBrowser();
+                    finish();
+                    startActivity(new Intent(Editor.this, Editor.class));
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
                     //No button clicked
@@ -954,6 +957,7 @@ public class Editor extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
+        //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivityForResult(intent, REQUEST_CODE);
     }
 
@@ -1084,7 +1088,6 @@ public class Editor extends AppCompatActivity {
     }
     public void ShowHistogram(View v){
         FillButtons("histogram_filters", _histogramButtonList, _histogramFiltersValues, HISTOGRAM_COUNT);
-
     }
 
 
@@ -1156,26 +1159,11 @@ public class Editor extends AppCompatActivity {
         int bmpH = bitmap.getHeight(), bmpW = bitmap.getWidth();
         parcelFileDescriptor.close();
 
-        if(bmpH >= 2000 || bmpW >=2000){
-            int newHeight = 2000, newWidth;
+        if(bmpH >= 1800 || bmpW >=1800){
+            int newHeight = 1800, newWidth;
             float aspectRatio = (bmpW > bmpH) ? ((float)bmpW/(float)bmpH) : ((float)bmpW/(float)bmpH);
-            //wtedy skaluje
             newWidth = Math.round(newHeight*aspectRatio);
             Toast.makeText(this, "Res "+newHeight+" "+newWidth,Toast.LENGTH_SHORT).show();
-
-            //final BitmapFactory.Options options = new BitmapFactory.Options();
-            //options.inJustDecodeBounds = true;
-            //File tmpImg = new File(_imageUri.getPath());
-            //BitmapFactory.decodeFile(tmpImg.getAbsolutePath(),options);
-            //tmpImg.delete();
-
-            // Calculate inSampleSize
-            //options.inSampleSize = Math.min(bitmap.getWidth()/newWidth, bitmap.getHeight()/newHeight);
-
-            // Decode bitmap with inSampleSize set
-//        options.inJustDecodeBounds = false;
-//        return BitmapFactory.decodeResource(res, resId, options);
-
             return  Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
         }
         else{
