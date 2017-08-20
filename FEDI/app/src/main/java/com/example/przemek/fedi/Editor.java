@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
@@ -153,7 +154,7 @@ public class Editor extends AppCompatActivity {
     Intent _launchedIntent;
 
     Uri _imageUri = null, _prevUri=null, _currUri, _copiedUri;
-    boolean _intentHasExtras, _processed;
+    boolean _intentHasExtras, _processed, _doubleBackToExitPressedOnce;
 
     int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
@@ -761,6 +762,24 @@ public class Editor extends AppCompatActivity {
         InitSliderListener();
     }
 
+    @Override
+    public void onBackPressed() {
+        if (_doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
+        }
+
+        _doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Wciśnij WSTECZ ponownie, aby wyjść.", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                _doubleBackToExitPressedOnce=false;
+            }
+        }, 2000);
+    }
     /***
      * Metoda odpowiedzialna za wyświetlenie opcji menu (górny pasek)
      * @param menu
