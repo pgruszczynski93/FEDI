@@ -162,14 +162,13 @@
                 android:onClick="ShowRotation"
                 android:text="Obróć" />
 
-            <!--
             <Button
                 android:id="@+id/cropButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:onClick="CropImage"
                 android:text="Kadruj" />
-            -->
+
         </LinearLayout>
         </HorizontalScrollView>
 

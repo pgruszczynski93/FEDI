@@ -34,8 +34,10 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -154,10 +156,13 @@ public class Editor extends AppCompatActivity {
     Intent _launchedIntent;
 
     Uri _imageUri = null, _prevUri=null, _currUri, _copiedUri;
-    boolean _intentHasExtras, _processed, _doubleBackToExitPressedOnce;
+    boolean _intentHasExtras, _processed, _doubleBackToExitPressedOnce, _uiShowed;
 
     int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
+
+    LinearLayout _topMenu, _bottoMenu;
+    HorizontalScrollView _scrollPanel;
 
     private class RenderScriptTask extends AsyncTask<Float, Void, Integer> {
         Boolean _issued = false;
@@ -758,10 +763,22 @@ public class Editor extends AppCompatActivity {
         setContentView(R.layout.activity_editor);
 
        // _imageView = (ImageView)findViewById(R.id.imageView2);
+        _uiShowed = false;
+        _scrollPanel = (HorizontalScrollView)findViewById(R.id.bottomScrollPanel);
+        _topMenu = (LinearLayout) findViewById(R.id.topMenuPanel);
+        _bottoMenu = (LinearLayout)findViewById(R.id.bottomMenuLayout);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
+    }
+
+    void ShowUI(){
+        Toast.makeText(this,"stan "+_uiShowed, Toast.LENGTH_SHORT).show();
+        _topMenu.setVisibility((_uiShowed) ? View.VISIBLE : View.INVISIBLE);
+        _bottoMenu.setVisibility((_uiShowed) ? View.VISIBLE : View.INVISIBLE);
+        _scrollPanel.setVisibility((_uiShowed) ? View.VISIBLE : View.INVISIBLE);
+        _uiShowed = !_uiShowed;
     }
 
     @Override
@@ -829,6 +846,8 @@ public class Editor extends AppCompatActivity {
                 return true;
             case R.id.action_save:
                 ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
+            case R.id.action_fullscreen:
+                ShowUI();
                 return true;
         }
         return super.onOptionsItemSelected(item);

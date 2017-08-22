@@ -64,7 +64,8 @@ public class Info extends AppCompatActivity {
                 "- Podgląd - wyświetla oryginalne zdjęcie.<br>" +
                 "- Informacje - wyświetla informacje o zdjęciu. <br>" +
                 "- Reset skali - skaluje przybliżone zdjęcie do oryginalnie wyświetlanych rozmiarów.<br>" +
-                "- Zapis - zapisuje zmodyfikowane zdjęcie.<br><br>");
+                "- Zapis - zapisuje zmodyfikowane zdjęcie.<br>"+
+                "- Pokaż/Ukryj - pokazuje/ukrywa elementy Edytora.<br><br>");
         myAttribute += ("2. Okno widoku:</b><br>Za pomocą gestów szczypania oraz przesuwania, możesz odpowiednio przybliżać oraz przesuwać " +
                 "zdjęcie w obrębie widoku.<br><br>");
         myAttribute += ("3. Opcje edycji: </b><br>Dolny pasek Edytora udostępnia następujące opcje: <br>" +

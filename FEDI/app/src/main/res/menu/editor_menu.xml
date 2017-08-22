@@ -27,6 +27,14 @@
         android:title="@string/action_save"
         app:showAsAction="always|withText"/>
 
+    <item
+        android:id="@+id/action_fullscreen"
+        android:icon="@mipmap/full_screen"
+        android:title="@string/action_fullscreen"
+        app:showAsAction="always|withText" />
+
+    <!--
     <item android:title="Ustawienia"
         app:showAsAction="never"/>
+        -->
 </menu>
