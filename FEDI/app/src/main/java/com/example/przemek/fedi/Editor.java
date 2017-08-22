@@ -59,10 +59,10 @@ import java.util.ArrayList;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 8, DETAILS_COUNT = 8, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 4,
+    final int ADJUSTMENT_COUNT = 8, DETAILS_COUNT = 7, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 4,
             GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 4, BLUR_COUNT = 3, HISTOGRAM_COUNT = 3;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie", "Gamma", "Wypełnienie światłem", "Prześwietlenia", "Cienie", "Temperatura"};
-    final String[] _detailsValues = {"Struktura", "Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel", "Płaskorzeźba"};
+    final String[] _detailsValues = {"Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel", "Płaskorzeźba"};
     final String[] _filtersValues = {"Wypełnienie światłem", "Winietowanie", "Negatyw", "Solaryzacja",
             "Sepia", "Bloom", "Soft glow", "Mozaika", "Farba olejna", "Zamiana kanału",
             "Kwantyzacja", "Poruszenie", "Czarne światło", "Kropkowanie", "Progowanie"};
@@ -642,7 +642,8 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Czarne światło")){
                 SetOptionSlider(0,6,1.0f);
             }
-            else if(_optionsLabel.equals("Dekompozycja") ||  _optionsLabel.equals("Odszumianie: mediana")) {
+            else if(_optionsLabel.equals("Dekompozycja") ||  _optionsLabel.equals("Odszumianie: mediana") ||
+                    _optionsLabel.equals("Rozmycie: mediana")) {
                 SetOptionSlider(0,1,0.0f);
             }
             else if(_optionsLabel.equals("Gamma")){
@@ -660,7 +661,7 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum")){
                 SetOptionSlider(0,4,0.0f);
             }
-            else if(_optionsLabel.equals("Odszumianie: średnia")){
+            else if(_optionsLabel.equals("Odszumianie: średnia") || _optionsLabel.equals("Rozmycie: średnia") ){
                 SetOptionSlider(0,2,0.0f);
             }
             else if(_optionsLabel.equals("Płaskorzeźba")){
@@ -705,7 +706,8 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Czarne światło") || _optionsLabel.equals("Dekompozycja") || _optionsLabel.equals("1-Kanał") ||
                     _optionsLabel.equals("N-Szarości") || _optionsLabel.equals("Zamiana kanału") || _optionsLabel.equals("Proste wyostrzanie") ||
                     _optionsLabel.equals("Minimum") || _optionsLabel.equals("Maksimum") || _optionsLabel.equals("Płaskorzeźba") ||
-                    _optionsLabel.equals("Odszumianie: średnia") || _optionsLabel.equals("Odszumianie: mediana")){
+                    _optionsLabel.equals("Odszumianie: średnia") || _optionsLabel.equals("Odszumianie: mediana") ||
+                    _optionsLabel.equals("Rozmycie: średnia") || _optionsLabel.equals("Rozmycie: mediana")){
                 value = progress;
             }
             else if(_optionsLabel.equals("Odcień") || _optionsLabel.equals("Temperatura")){

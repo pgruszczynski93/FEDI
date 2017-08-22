@@ -7,10 +7,15 @@
         android:id="@+id/menuInfoText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/menuInfoCloseButton"
+        android:text="TextView" />
+
+    <Button
+        android:id="@+id/menuInfoCloseButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:scrollbars="vertical" />
-
+        android:onClick="ShowMainMenu"
+        android:text="Zamknij" />
 </RelativeLayout>

@@ -101,7 +101,7 @@ public class ImageInfo extends AppCompatActivity {
         }
     }
 
-    String getTagString(String tagDefinition, String tag, ExifInterface exif)
+    String GetTagString(String tagDefinition, String tag, ExifInterface exif)
     {
         String atribVal = ((exif.getAttribute(tag)!=null) ? exif.getAttribute(tag) : "Brak danych");
         return("<b>"+tagDefinition+"</b>" + ":<br>" +atribVal + "<br><br>");
@@ -113,7 +113,7 @@ public class ImageInfo extends AppCompatActivity {
         myAttribute += ("<b>Nazwa pliku:</b><br>"+_imgPath.substring(_imgPath.lastIndexOf("/")+1)+"<br><br>");
         myAttribute += ("<b>Ścieżka do pliku:</b><br>"+_imgPath+"<br><br>");
         for(Map.Entry<String, String> entry  : _exifTagMap.entrySet()){
-            myAttribute += getTagString(entry.getValue(),entry.getKey(),exif);
+            myAttribute += GetTagString(entry.getValue(),entry.getKey(),exif);
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             _imageInfoText.setText(Html.fromHtml(myAttribute,Html.FROM_HTML_MODE_COMPACT));
