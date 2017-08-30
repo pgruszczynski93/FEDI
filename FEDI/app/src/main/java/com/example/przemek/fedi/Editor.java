@@ -143,6 +143,8 @@ public class Editor extends AppCompatActivity {
     _natururalFiltButtonList, _grayScaleButtonList, _noiseButtonList, _blurButtonList, _histogramButtonList;
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
     String _currBottomButton, _prevBottomButton = "", _optionsLabel;
+    String _currOptionButton, _prevOptionButton = "";
+
 
     LinearLayout _optionsLayout, _sliderOptLayout;
     TextView _optSliderText;
@@ -156,7 +158,7 @@ public class Editor extends AppCompatActivity {
     Intent _launchedIntent;
 
     Uri _imageUri = null, _prevUri=null, _currUri, _copiedUri;
-    boolean _intentHasExtras, _processed, _doubleBackToExitPressedOnce, _uiShowed;
+    boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false, _doubleBackToExitPressedOnce, _uiShowed;
 
     int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
@@ -616,13 +618,13 @@ public class Editor extends AppCompatActivity {
             ResetSliderLayout();
             //_sliderOptLayout.setVisibility(View.VISIBLE);
 
+
+            _currOptionButton = _optionsLabel;
             InitRenderScriptOps();
             CreateScript();
 
             if(_optionsLabel.equals("Jasność") || _optionsLabel.equals("Kontrast") || _optionsLabel.equals("Odcień")||
-                    _optionsLabel.equals("Temperatura") || _optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie") ||
-                    _optionsLabel.equals("Atmosfera") || _optionsLabel.equals("Ogień") || _optionsLabel.equals("Lód") ||
-                    _optionsLabel.equals("Woda") || _optionsLabel.equals("Ziemia")){
+                    _optionsLabel.equals("Temperatura") || _optionsLabel.equals("Prześwietlenia") || _optionsLabel.equals("Cienie")){
 
                 SetOptionSlider(100,200,0.0f);
             }
@@ -877,21 +879,26 @@ public class Editor extends AppCompatActivity {
         //usuwac zdjecie po przetworzeniu
 
         try {
-            Toast.makeText(this, "Status " + _processed, Toast.LENGTH_SHORT).show();
-//            if (_processed) {
-//                if (!_currUri.equals(_prevUri)) {
-//                    _prevUri = _currUri;
-//                }
-//                _currUri = GetImageUri(this, _resultBitmap);
-//                _inputBitmap = GetBitmapFromUri(_currUri);
-//            } else {
-//                _inputBitmap = GetBitmapFromUri((_prevUri != null) ? _prevUri : _imageUri);
+
+            Toast.makeText(getApplicationContext(), "2N "+_currOptionButton + " S " + _prevOptionButton+" OPT "+_optChanged + " PROCS "+_processed + " GRUP "+_groupChanged, Toast.LENGTH_SHORT).show();
+
+            if(!_currOptionButton.equals(_prevOptionButton)){
+                _prevOptionButton = _currOptionButton;
+                _optChanged = true;
+            }
+            else{
+                _optChanged = false;
+            }
+
+            // POPRAWIC PRZEJSCIA MIEDZY GRUPAMi
+
+//            if(_optChanged && _processed){
+//                _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
 //            }
-            //_inputBitmap = (_processed) ?  GetBitmapFromUri(GetImageUri(this,_resultBitmap)): GetBitmapFromUri(_imageUri);
+//            else {
+//                _inputBitmap = GetBitmapFromUri(_imageUri);
+//            }
             _inputBitmap = GetBitmapFromUri(_imageUri);
-            // if(_processed){
-            //   _currUri = GetImageUri(this,_resultBitmap);
-            //}
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -908,6 +915,10 @@ public class Editor extends AppCompatActivity {
                         _inputBitmap.getHeight(), _inputBitmap.getConfig());
             }
         }
+
+        // --------------------------------------------------------------------- JCt przesnuesc
+        _processed = false;
+
 //        ByteArrayOutputStream stream = new ByteArrayOutputStream();
 //        _bitmapsOut[_currentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
 //        Glide.with(this)
@@ -1055,14 +1066,23 @@ public class Editor extends AppCompatActivity {
     void SetOptionsVisibility(String currBottomButton){
         int optionsVisibility = _optionsLayout.getVisibility();
         ResetOptionsLayout();
-        if(optionsVisibility==View.VISIBLE && (_currBottomButton.equals(_prevBottomButton))){
+
+        if(_currBottomButton.equals(_prevBottomButton)){
+            _groupChanged = false;
+        }
+        else{
+            if(_prevBottomButton.length() > 0){
+                ShowAlert("Zapisać zmiany w grupie \""+_prevBottomButton
+                        +"\"?",_changeOptionListener);
+            }
+            _groupChanged = true;
+        }
+
+        if(_currBottomButton.equals(_prevBottomButton) && (optionsVisibility==View.VISIBLE)){
             _optionsLayout.setVisibility(View.INVISIBLE);
             _sliderOptLayout.setVisibility(View.INVISIBLE);
         }
         else{
-            //{POPTRAWIC TUTAJS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//            ShowAlert("Zapisać zmiany w grupie \""+_prevBottomButton
-//                    +"\"?",_changeOptionListener);
             _optionsLayout.setVisibility(View.VISIBLE);
             if(!_currBottomButton.equals(_prevBottomButton)){
                 _sliderOptLayout.setVisibility(View.INVISIBLE);
@@ -1097,6 +1117,7 @@ public class Editor extends AppCompatActivity {
         buttonList = new Button[count];
         SetOptionsVisibility(_currBottomButton);
         FillOptionsBar(labels, buttonList ,count);
+        //Toast.makeText(getApplicationContext(), "2 GRUP "+_groupChanged, Toast.LENGTH_SHORT).show();
     }
 
     public void ShowAdjustments(View v){
@@ -1129,7 +1150,6 @@ public class Editor extends AppCompatActivity {
     public void ShowHistogram(View v){
         FillButtons("histogram_filters", _histogramButtonList, _histogramFiltersValues, HISTOGRAM_COUNT);
     }
-
 
 
     public void SaveAdjustment(View v){
@@ -1183,11 +1203,11 @@ public class Editor extends AppCompatActivity {
             int newHeight = 1800, newWidth;
             float aspectRatio = (bmpW > bmpH) ? ((float)bmpW/(float)bmpH) : ((float)bmpW/(float)bmpH);
             newWidth = Math.round(newHeight*aspectRatio);
-            Toast.makeText(this, "Res "+newHeight+" "+newWidth,Toast.LENGTH_SHORT).show();
+          //  Toast.makeText(this, "Res "+newHeight+" "+newWidth,Toast.LENGTH_SHORT).show();
             return  Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
         }
         else{
-            Toast.makeText(this, "Res "+bmpH+" "+bmpW,Toast.LENGTH_SHORT).show();
+           // Toast.makeText(this, "Res "+bmpH+" "+bmpW,Toast.LENGTH_SHORT).show();
             return bitmap;
         }
     }
