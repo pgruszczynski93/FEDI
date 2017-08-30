@@ -25,19 +25,15 @@ import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.ScriptIntrinsicBlend;
 import android.support.v8.renderscript.ScriptIntrinsicBlur;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,7 +46,6 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /***
@@ -158,7 +153,7 @@ public class Editor extends AppCompatActivity {
     Intent _launchedIntent;
 
     Uri _imageUri = null, _prevUri=null, _currUri, _copiedUri;
-    boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false, _doubleBackToExitPressedOnce, _uiShowed;
+    boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false, _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true;
 
     int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
@@ -824,6 +819,23 @@ public class Editor extends AppCompatActivity {
                 CheckGetInfoUriPermission();
                 return true;
             case R.id.action_preview:
+                ShowUI();
+                _previewDisabled = !_previewDisabled;
+                try{
+                    if(_previewDisabled){
+                        item.setIcon(R.mipmap.review);
+                        _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
+                        _zoomPinchImageView.SetBitmap(_inputBitmap);
+                    }
+                    else{
+                        item.setIcon(R.mipmap.review_on);
+                        _inputBitmap = GetBitmapFromUri(_imageUri);
+                        _zoomPinchImageView.SetBitmap(_inputBitmap);
+                    }
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
 //                item.setActionView(new Button(this));
 //                item.getActionView().setOnTouchListener(new View.OnTouchListener(){
 //                    @Override
@@ -849,7 +861,10 @@ public class Editor extends AppCompatActivity {
             case R.id.action_save:
                 ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
             case R.id.action_fullscreen:
-                ShowUI();
+                Toast.makeText(getApplicationContext(), "ID "+item.getTitle(), Toast.LENGTH_LONG).show();
+                if(_previewDisabled){
+                    ShowUI();
+                }
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -892,13 +907,13 @@ public class Editor extends AppCompatActivity {
 
             // POPRAWIC PRZEJSCIA MIEDZY GRUPAMi
 
-//            if(_optChanged && _processed){
-//                _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
-//            }
-//            else {
-//                _inputBitmap = GetBitmapFromUri(_imageUri);
-//            }
-            _inputBitmap = GetBitmapFromUri(_imageUri);
+            if(_optChanged && _processed){
+                _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
+            }
+            else {
+                _inputBitmap = GetBitmapFromUri(_imageUri);
+            }
+            //_inputBitmap = GetBitmapFromUri(_imageUri);
         } catch (IOException e) {
             e.printStackTrace();
         }
