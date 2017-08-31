@@ -1181,34 +1181,34 @@ public class Editor extends AppCompatActivity {
     }
 
     public void ShowAdjustments(View v){
-        FillButtons("adjustments", _adjustmentsButtonsList, _adjustmentValues, ADJUSTMENT_COUNT);
+        FillButtons("Dopasuj", _adjustmentsButtonsList, _adjustmentValues, ADJUSTMENT_COUNT);
     }
     public void ShowNoise(View v){
-        FillButtons("noise", _noiseButtonList, _noiseFiltersValues, NOISE_COUNT);
+        FillButtons("Filtry: szum", _noiseButtonList, _noiseFiltersValues, NOISE_COUNT);
     }
     public void ShowDetails(View v){
-        FillButtons("details", _detailsButtonList, _detailsValues, DETAILS_COUNT);
+        FillButtons("Szczegóły", _detailsButtonList, _detailsValues, DETAILS_COUNT);
     }
     public void ShowFilters(View v){
-        FillButtons("filters", _filtersButtonList, _filtersValues, FILTERS_COUNT);
+        FillButtons("Filtry: ogólne", _filtersButtonList, _filtersValues, FILTERS_COUNT);
     }
     public void ShowWhiteBalance(View v){
-        FillButtons("whitebalance", _wbButtonList, _whiteBalanceValues, WHITE_BALANCE_COUNT);
+        FillButtons("Balans bieli", _wbButtonList, _whiteBalanceValues, WHITE_BALANCE_COUNT);
     }
     public void ShowRotation(View v){
-        FillButtons("rotation", _rotationButtonList, _rotationValues, ROTATIONS_COUNT);
+        FillButtons("Obróć", _rotationButtonList, _rotationValues, ROTATIONS_COUNT);
     }
     public void ShowNaturalFilters(View v){
-        FillButtons("naturalfilters", _natururalFiltButtonList, _naturalFiltersValues, NATURALFILTERS_COUNT);
+        FillButtons("Filtry: natura", _natururalFiltButtonList, _naturalFiltersValues, NATURALFILTERS_COUNT);
     }
     public void ShowGrayscaleFilters(View v){
-        FillButtons("grayscale", _grayScaleButtonList, _grayscalesValues, GRAYSCALE_COUNT);
+        FillButtons("Filtry: szarości", _grayScaleButtonList, _grayscalesValues, GRAYSCALE_COUNT);
     }
     public void ShowBlurFilters(View v){
-        FillButtons("blur", _blurButtonList, _blurFiltersValues, BLUR_COUNT);
+        FillButtons("Rozymcie", _blurButtonList, _blurFiltersValues, BLUR_COUNT);
     }
     public void ShowHistogram(View v){
-        FillButtons("histogram_filters", _histogramButtonList, _histogramFiltersValues, HISTOGRAM_COUNT);
+        FillButtons("Histogram", _histogramButtonList, _histogramFiltersValues, HISTOGRAM_COUNT);
     }
 
 
