@@ -156,7 +156,7 @@ public class Editor extends AppCompatActivity {
 
     Uri _imageUri = null, _currUri;
     boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false, _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true;
-    boolean _imgInfoDisabled = true, _imgPreviewDisabled = true, _imgScaleResetDisable = true, _imgFulScreenDisabled = true;
+    boolean _imgPreviewDisabled = true, _imgScaleResetDisable = true, _imgFulScreenDisabled = true;
 
     int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
@@ -828,8 +828,6 @@ public class Editor extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.action_img_info:
-                _imgInfoDisabled = !_imgInfoDisabled;
-                ChangeMenuItemIcon(item, (_imgInfoDisabled) ? R.mipmap.info : R.mipmap.info_on);
                 CheckGetInfoUriPermission();
                 return true;
             case R.id.action_preview:
@@ -837,6 +835,8 @@ public class Editor extends AppCompatActivity {
                 _previewDisabled = !_previewDisabled;
                 try{
                     if(_previewDisabled){
+
+                        //sprawdzac czy obraz byl przetworzony bo inaczej krasz
                         item.setIcon(R.mipmap.review);
                         _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
                     }
@@ -857,10 +857,12 @@ public class Editor extends AppCompatActivity {
                 ResetScale();
                 return true;
             case R.id.action_save:
-                _saveItem = item;
-                item.setIcon(R.mipmap.save_on);
-                ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
-                return true;
+                if(_previewDisabled){
+                    _saveItem = item;
+                    item.setIcon(R.mipmap.save_on);
+                    ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
+                    return true;
+                }
             case R.id.action_fullscreen:
                 if(_previewDisabled){
                     _imgFulScreenDisabled = !_imgFulScreenDisabled;
