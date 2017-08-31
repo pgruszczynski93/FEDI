@@ -1,6 +1,7 @@
 package com.example.przemek.fedi;
 
 import android.content.Intent;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -9,6 +10,7 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class Info extends AppCompatActivity {
 
@@ -31,6 +33,13 @@ public class Info extends AppCompatActivity {
         InitDialog();
         FillTextView();
     }
+//
+//    @Override
+//    public void onBackPressed() {
+//        super.onBackPressed();
+//        finish();
+//        startActivity(new Intent(Info.this, MainMenu.class));
+//    }
 
     public void ShowMainMenu(View view){
         finish();

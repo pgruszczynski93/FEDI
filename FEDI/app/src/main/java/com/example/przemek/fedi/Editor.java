@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -782,6 +784,8 @@ public class Editor extends AppCompatActivity {
     public void onBackPressed() {
         if (_doubleBackToExitPressedOnce) {
             super.onBackPressed();
+            finish();
+            startActivity(new Intent(Editor.this, MainMenu.class));
             return;
         }
 
@@ -878,7 +882,8 @@ public class Editor extends AppCompatActivity {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent resultData){
-        if(requestCode == REQUEST_CODE && resultCode == RESULT_OK){
+        if(requestCode == REQUEST_CODE && resultCode == RESULT_OK && resultData != null){
+            Toast.makeText(this, "OK WLACAM" + requestCode + " asa "+requestCode, Toast.LENGTH_LONG).show();
             SetImageToView(resultData);
             //resetuj layout slidera po wczytaniu nowego zdjecia  i layouty
             _optionsLayout.setVisibility(View.INVISIBLE);
@@ -886,6 +891,10 @@ public class Editor extends AppCompatActivity {
             ResetSliderLayout();
             ResetScale();
 //
+        }
+        else{
+            finish();
+            startActivity(new Intent(Editor.this, MainMenu.class));
         }
     }
 
@@ -984,6 +993,34 @@ public class Editor extends AppCompatActivity {
             });
 
         Toast.makeText(this,"Zapisano pomyślnie!", Toast.LENGTH_SHORT).show();
+    }
+
+    void ChangeImageOrientation(Bitmap bitmap){
+        int orientation;
+        ExifInterface exifInterface = null;
+        Matrix matrix = new Matrix();
+
+        try {
+            exifInterface = new ExifInterface(_imageUri.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+        switch (orientation){
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.setRotate(90);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.setRotate(180);
+                break;
+//            case ExifInterface.ORIENTATION_ROTATE_270:
+//                matrix.setRotate(270);
+//                break;
+            default:
+        }
+
+        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
+        _zoomPinchImageView.SetBitmap(rotatedBitmap);
     }
 
     private Bitmap loadBitmap(int resource) {
@@ -1172,15 +1209,7 @@ public class Editor extends AppCompatActivity {
     }
 
     public void CancelAdjustment(View v){
-        //_processed = false;
-        try{
-            Toast.makeText(this, "RESET ZD ", Toast.LENGTH_SHORT).show();
-            _inputBitmap = GetBitmapFromUri(_imageUri);
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-
+        ChangeImageOrientation(_inputBitmap);
     }
 
 

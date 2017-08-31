@@ -99,7 +99,6 @@ public class MainMenu extends AppCompatActivity {
                         _nextIntent = new Intent(MainMenu.this, ((i==0) ? Editor.class : Info.class));
                         startActivity(_nextIntent);
                     }
-                    //finish();
                 }
             });
     }
@@ -204,6 +203,8 @@ public class MainMenu extends AppCompatActivity {
             _circleMenu.closeMenu();
         else{
             if (_doubleBackToExitPressedOnce) {
+                //finish();
+                finishAffinity();
                 super.onBackPressed();
                 return;
             }
@@ -218,8 +219,6 @@ public class MainMenu extends AppCompatActivity {
                     _doubleBackToExitPressedOnce=false;
                 }
             }, 2000);
-
-            //finish();
         }
     }
 
