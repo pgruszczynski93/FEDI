@@ -132,7 +132,7 @@ public class Editor extends AppCompatActivity {
     RenderScriptTask _currentTask;
     RenderScript rs;
 
-    Bitmap _inputBitmap, _resultBitmap, _bitmapToRemove;
+    Bitmap _inputBitmap, _resultBitmap;
 
 
     //tablice: dopasowań, detali, filtrów, balansu bieli
@@ -154,11 +154,13 @@ public class Editor extends AppCompatActivity {
     public ZoomPinchImageView _zoomPinchImageView;
     Intent _launchedIntent;
 
-    Uri _imageUri = null, _prevUri=null, _currUri, _copiedUri;
+    Uri _imageUri = null, _currUri;
     boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false, _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true;
+    boolean _imgInfoDisabled = true, _imgPreviewDisabled = true, _imgScaleResetDisable = true, _imgFulScreenDisabled = true;
 
     int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
+    MenuItem _saveItem;
 
     LinearLayout _topMenu, _bottoMenu;
     HorizontalScrollView _scrollPanel;
@@ -501,6 +503,7 @@ public class Editor extends AppCompatActivity {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
                     // tutaj wstawic zpisywanies
+                    _saveItem.setIcon(R.mipmap.save);
                     if(_resultBitmap != null)
                         SaveBitmap(_resultBitmap);
                     else
@@ -508,6 +511,7 @@ public class Editor extends AppCompatActivity {
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
                     //No button clicked
+                    _saveItem.setIcon(R.mipmap.save);
                     break;
             }
         }
@@ -811,6 +815,10 @@ public class Editor extends AppCompatActivity {
             return true;
     }
 
+    void ChangeMenuItemIcon(MenuItem item, int icon){
+        item.setIcon(icon);
+    }
+
     /***
      * Metoda odpowiedzialna za interakcje z elementami gornego menu.
      * @param item
@@ -820,6 +828,8 @@ public class Editor extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.action_img_info:
+                _imgInfoDisabled = !_imgInfoDisabled;
+                ChangeMenuItemIcon(item, (_imgInfoDisabled) ? R.mipmap.info : R.mipmap.info_on);
                 CheckGetInfoUriPermission();
                 return true;
             case R.id.action_preview:
@@ -829,32 +839,16 @@ public class Editor extends AppCompatActivity {
                     if(_previewDisabled){
                         item.setIcon(R.mipmap.review);
                         _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
-                        _zoomPinchImageView.SetBitmap(_inputBitmap);
                     }
                     else{
                         item.setIcon(R.mipmap.review_on);
                         _inputBitmap = GetBitmapFromUri(_imageUri);
-                        _zoomPinchImageView.SetBitmap(_inputBitmap);
                     }
+                    _zoomPinchImageView.SetBitmap(_inputBitmap);
                 }
                 catch (IOException e) {
                     e.printStackTrace();
                 }
-//                item.setActionView(new Button(this));
-//                item.getActionView().setOnTouchListener(new View.OnTouchListener(){
-//                    @Override
-//                    public boolean onTouch(View v, MotionEvent event) {
-//                        switch(event.getAction()) {
-//                            case MotionEvent.ACTION_DOWN:
-//                                //kod tutaj
-//                                break;
-//                            case MotionEvent.ACTION_UP:
-//                                //kod tutaj
-//                                break;
-//                        }
-//                        return false;
-//                    }
-//                });
                 return true;
             case R.id.action_open:
                 ShowAlert("Zmiany zostaną utracone. Kontynuować?",_dialogClickListener);
@@ -863,10 +857,14 @@ public class Editor extends AppCompatActivity {
                 ResetScale();
                 return true;
             case R.id.action_save:
+                _saveItem = item;
+                item.setIcon(R.mipmap.save_on);
                 ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
+                return true;
             case R.id.action_fullscreen:
-                Toast.makeText(getApplicationContext(), "ID "+item.getTitle(), Toast.LENGTH_LONG).show();
                 if(_previewDisabled){
+                    _imgFulScreenDisabled = !_imgFulScreenDisabled;
+                    ChangeMenuItemIcon(item, (_imgFulScreenDisabled) ? R.mipmap.full_screen : R.mipmap.full_screen_on);
                     ShowUI();
                 }
                 return true;
@@ -1001,7 +999,7 @@ public class Editor extends AppCompatActivity {
         Matrix matrix = new Matrix();
 
         try {
-            exifInterface = new ExifInterface(_imageUri.toString());
+            exifInterface = new ExifInterface(UriConverter.getPath(this, _imageUri));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1048,6 +1046,7 @@ public class Editor extends AppCompatActivity {
 
     void ShowAlert(String message, DialogInterface.OnClickListener clickListener){
         _builder = new AlertDialog.Builder(this);
+        _builder.setCancelable(false);
         _builder.setMessage(message).setPositiveButton("Tak", clickListener)
                 .setNegativeButton("Anuluj", clickListener).show();
     }
@@ -1092,6 +1091,13 @@ public class Editor extends AppCompatActivity {
                    // .override(1920,1080)
                    // .fitCenter()
                     .into( _zoomPinchImageView);
+
+
+            try {
+                _inputBitmap = GetBitmapFromUri(_imageUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             _processed = false; // flaga iformujaca o tym czy zdjecie zostalo w jakikolwiek sposob przetworzeone
 
@@ -1210,6 +1216,8 @@ public class Editor extends AppCompatActivity {
 
     public void CancelAdjustment(View v){
         ChangeImageOrientation(_inputBitmap);
+      //  Toast.makeText(this,"pizda", Toast.LENGTH_SHORT).show();
+
     }
 
 
@@ -1247,7 +1255,7 @@ public class Editor extends AppCompatActivity {
             int newHeight = 1800, newWidth;
             float aspectRatio = (bmpW > bmpH) ? ((float)bmpW/(float)bmpH) : ((float)bmpW/(float)bmpH);
             newWidth = Math.round(newHeight*aspectRatio);
-          //  Toast.makeText(this, "Res "+newHeight+" "+newWidth,Toast.LENGTH_SHORT).show();
+          //  Toast.makeText(this, "Res "+newHecight+" "+newWidth,Toast.LENGTH_SHORT).show();
             return  Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
         }
         else{
