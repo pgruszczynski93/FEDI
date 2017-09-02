@@ -154,9 +154,9 @@ public class Editor extends AppCompatActivity {
     public ZoomPinchImageView _zoomPinchImageView;
     Intent _launchedIntent;
 
-    Uri _imageUri = null, _currUri;
-    boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false, _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true;
-    boolean _imgPreviewDisabled = true, _imgScaleResetDisable = true, _imgFulScreenDisabled = true;
+    Uri _imageUri = null, _processedUri = null ;
+    boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false;
+    boolean _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true, _imgFulScreenDisabled = true;
 
     int _initCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
@@ -507,7 +507,7 @@ public class Editor extends AppCompatActivity {
                     if(_resultBitmap != null)
                         SaveBitmap(_resultBitmap);
                     else
-                        Toast.makeText(Editor.this, "Nie wprowadzono zmian!", Toast.LENGTH_SHORT).show();
+                        ShowAlert("Nie wprowadzono zmian!",_confirmListener,false);
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
                     //No button clicked
@@ -522,10 +522,22 @@ public class Editor extends AppCompatActivity {
         public void onClick(DialogInterface dialog, int which) {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
-
+//                    if(_resultBitmap != null){
+//
+//                    }
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
                     //No button clicked
+                    break;
+            }
+        }
+    };
+
+    DialogInterface.OnClickListener _confirmListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case DialogInterface.BUTTON_POSITIVE:
                     break;
             }
         }
@@ -610,8 +622,6 @@ public class Editor extends AppCompatActivity {
         UpdateImage(imageValue);
     }
 
-    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TESTOWO!!!!!!!!!!!!!!!!!!! */
-    // listener dla kliknietego buttona
     View.OnClickListener btnClicked = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -838,9 +848,15 @@ public class Editor extends AppCompatActivity {
 
                         //sprawdzac czy obraz byl przetworzony bo inaczej krasz
                         item.setIcon(R.mipmap.review);
-                        _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
+                        if(_resultBitmap !=null){
+                            _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
+                        }
+
                     }
                     else{
+                        if(_resultBitmap == null){
+                            ShowAlert("Zdjęcie nie zostało wcześniej zmodyfikowane.", _confirmListener, false);
+                        }
                         item.setIcon(R.mipmap.review_on);
                         _inputBitmap = GetBitmapFromUri(_imageUri);
                     }
@@ -851,7 +867,7 @@ public class Editor extends AppCompatActivity {
                 }
                 return true;
             case R.id.action_open:
-                ShowAlert("Zmiany zostaną utracone. Kontynuować?",_dialogClickListener);
+                ShowAlert("Zmiany zostaną utracone. Kontynuować?",_dialogClickListener, true);
                 return true;
             case R.id.action_reset_scale:
                 ResetScale();
@@ -860,7 +876,7 @@ public class Editor extends AppCompatActivity {
                 if(_previewDisabled){
                     _saveItem = item;
                     item.setIcon(R.mipmap.save_on);
-                    ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener);
+                    ShowAlert("Czy chcesz zapisać zmiany?", _saveClickListener, true);
                     return true;
                 }
             case R.id.action_fullscreen:
@@ -883,14 +899,11 @@ public class Editor extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent resultData){
         if(requestCode == REQUEST_CODE && resultCode == RESULT_OK && resultData != null){
-            Toast.makeText(this, "OK WLACAM" + requestCode + " asa "+requestCode, Toast.LENGTH_LONG).show();
             SetImageToView(resultData);
-            //resetuj layout slidera po wczytaniu nowego zdjecia  i layouty
             _optionsLayout.setVisibility(View.INVISIBLE);
             _sliderOptLayout.setVisibility(View.INVISIBLE);
             ResetSliderLayout();
             ResetScale();
-//
         }
         else{
             finish();
@@ -900,7 +913,6 @@ public class Editor extends AppCompatActivity {
 
     void InitRenderScriptOps() {
 
-        //usuwac zdjecie po przetworzeniu
 
         try {
 
@@ -914,7 +926,6 @@ public class Editor extends AppCompatActivity {
                 _optChanged = false;
             }
 
-            // POPRAWIC PRZEJSCIA MIEDZY GRUPAMi
 
             if(_optChanged && _processed){
                 _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
@@ -992,7 +1003,7 @@ public class Editor extends AppCompatActivity {
                 }
             });
 
-        Toast.makeText(this,"Zapisano pomyślnie!", Toast.LENGTH_SHORT).show();
+        ShowAlert("Zapisano pomyślnie!",_confirmListener,false);
     }
 
     void ChangeImageOrientation(Bitmap bitmap){
@@ -1046,11 +1057,16 @@ public class Editor extends AppCompatActivity {
 
     }
 
-    void ShowAlert(String message, DialogInterface.OnClickListener clickListener){
+    void ShowAlert(String message, DialogInterface.OnClickListener clickListener, boolean manyOptions){
         _builder = new AlertDialog.Builder(this);
         _builder.setCancelable(false);
-        _builder.setMessage(message).setPositiveButton("Tak", clickListener)
-                .setNegativeButton("Anuluj", clickListener).show();
+        if(manyOptions){
+            _builder.setMessage(message).setPositiveButton("Tak", clickListener)
+                    .setNegativeButton("Anuluj", clickListener).show();
+        }
+        else{
+            _builder.setMessage(message).setPositiveButton("OK", clickListener).show();
+        }
     }
 
     /***
@@ -1104,8 +1120,6 @@ public class Editor extends AppCompatActivity {
             _processed = false; // flaga iformujaca o tym czy zdjecie zostalo w jakikolwiek sposob przetworzeone
 
             _zoomPinchImageView.SetImgUri(_imageUri);
-
-            _currUri = _imageUri;
         }
     }
 
@@ -1133,7 +1147,7 @@ public class Editor extends AppCompatActivity {
         else{
             if(_prevBottomButton.length() > 0){
                 ShowAlert("Zapisać zmiany w grupie \""+_prevBottomButton
-                        +"\"?",_changeOptionListener);
+                        +"\"?",_changeOptionListener, true);
             }
             _groupChanged = true;
         }
@@ -1217,9 +1231,7 @@ public class Editor extends AppCompatActivity {
     }
 
     public void CancelAdjustment(View v){
-        ChangeImageOrientation(_inputBitmap);
-      //  Toast.makeText(this,"pizda", Toast.LENGTH_SHORT).show();
-
+//        ChangeImageOrientation(_inputBitmap);
     }
 
 
