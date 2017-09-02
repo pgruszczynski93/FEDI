@@ -141,6 +141,7 @@ public class Editor extends AppCompatActivity {
     //stringi: obecnie wcisniety, poprzednio wcisniety (przycisk), etykieta przy sliderze
     String _currBottomButton, _prevBottomButton = "", _optionsLabel;
     String _currOptionButton, _prevOptionButton = "";
+    String _processedUriStr, _currentUriStr;
 
 
     LinearLayout _optionsLayout, _sliderOptLayout;
@@ -154,7 +155,7 @@ public class Editor extends AppCompatActivity {
     public ZoomPinchImageView _zoomPinchImageView;
     Intent _launchedIntent;
 
-    Uri _imageUri = null, _processedUri = null ;
+    Uri _imageUri = null, _processedUri = null, _currentUri ;
     boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false;
     boolean _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true, _imgFulScreenDisabled = true;
 
@@ -485,13 +486,10 @@ public class Editor extends AppCompatActivity {
         public void onClick(DialogInterface dialog, int which) {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
-                  //  finish();
-                    //OpenImageBrowser();
                     finish();
                     startActivity(new Intent(Editor.this, Editor.class));
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
-                    //No button clicked
                     break;
             }
         }
@@ -502,7 +500,6 @@ public class Editor extends AppCompatActivity {
         public void onClick(DialogInterface dialog, int which) {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
-                    // tutaj wstawic zpisywanies
                     _saveItem.setIcon(R.mipmap.save);
                     if(_resultBitmap != null)
                         SaveBitmap(_resultBitmap);
@@ -510,7 +507,6 @@ public class Editor extends AppCompatActivity {
                         ShowAlert("Nie wprowadzono zmian!",_confirmListener,false);
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
-                    //No button clicked
                     _saveItem.setIcon(R.mipmap.save);
                     break;
             }
@@ -523,11 +519,31 @@ public class Editor extends AppCompatActivity {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
 //                    if(_resultBitmap != null){
-//
+//                        _processedUri = Uri.parse(_currentUriStr.toString());
+//                        try {
+//                            _inputBitmap = GetBitmapFromUri(_processedUri);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
 //                    }
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
-                    //No button clicked
+//                    if(_processedUriStr != null){
+//                        _imageUri = (_processedUriStr.length() > 0) ? Uri.parse(_processedUriStr) : _imageUri;
+//                        try {
+//                            _inputBitmap = GetBitmapFromUri(_imageUri);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                    else{
+//                        try {
+//                            _inputBitmap = GetBitmapFromUri(_imageUri);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                    _zoomPinchImageView.SetBitmap(_inputBitmap);
                     break;
             }
         }
@@ -701,9 +717,7 @@ public class Editor extends AppCompatActivity {
         //_copiedUri = Uri.parse(path);
         return Uri.parse(path);
     }
-    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TESTOWO!!!!!!!!!!!!!!!!!!! */
 
-    // listener dla zmiany wartosci slidera
     SeekBar.OnSeekBarChangeListener sbValueChange = new SeekBar.OnSeekBarChangeListener(){
         float value;
         @Override
@@ -746,21 +760,7 @@ public class Editor extends AppCompatActivity {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-            ///tymczasowo -----------------------------------------------
-//            _history.add(_resultBitmap);
             _processed = true;
-            //Toast.makeText(getApplicationContext(),"Przetworzono ", Toast.LENGTH_LONG).show();
-//            if(_history.size() > 0){
-//                _zoomPinchImageView.SetBitmap(_history.get(_history.size() - 1));
-//                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-//                _history.get(_history.size() - 1).compress(Bitmap.CompressFormat.JPEG, 100, stream);
-//                Glide.with(getApplicationContext())
-//                        .load(stream.toByteArray())
-//                        .asBitmap()
-//                        .diskCacheStrategy( DiskCacheStrategy.NONE )
-//                        .skipMemoryCache( false )
-//                        .into(_zoomPinchImageView);
-//            }
         }
     };
 
@@ -775,7 +775,6 @@ public class Editor extends AppCompatActivity {
         HideNotifAndTitleBars();
         setContentView(R.layout.activity_editor);
 
-       // _imageView = (ImageView)findViewById(R.id.imageView2);
         _uiShowed = false;
         _scrollPanel = (HorizontalScrollView)findViewById(R.id.bottomScrollPanel);
         _topMenu = (LinearLayout) findViewById(R.id.topMenuPanel);
@@ -787,7 +786,6 @@ public class Editor extends AppCompatActivity {
     }
 
     void ShowUI(){
-        Toast.makeText(this,"stan "+_uiShowed, Toast.LENGTH_SHORT).show();
         _topMenu.setVisibility((_uiShowed) ? View.VISIBLE : View.INVISIBLE);
         _bottoMenu.setVisibility((_uiShowed) ? View.VISIBLE : View.INVISIBLE);
         _scrollPanel.setVisibility((_uiShowed) ? View.VISIBLE : View.INVISIBLE);
@@ -912,11 +910,13 @@ public class Editor extends AppCompatActivity {
     }
 
     void InitRenderScriptOps() {
-
-
         try {
 
-            Toast.makeText(getApplicationContext(), "2N "+_currOptionButton + " S " + _prevOptionButton+" OPT "+_optChanged + " PROCS "+_processed + " GRUP "+_groupChanged, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "2N "+_currOptionButton + " S " + _prevOptionButton+" OPT "+_optChanged + " PROCS "+_processed + " GRUP "+_groupChanged, Toast.LENGTH_LONG).show();
+
+            if(_initCounter < 1){
+                _prevOptionButton = _currOptionButton;
+            }
 
             if(!_currOptionButton.equals(_prevOptionButton)){
                 _prevOptionButton = _currOptionButton;
@@ -926,12 +926,19 @@ public class Editor extends AppCompatActivity {
                 _optChanged = false;
             }
 
-
+//
             if(_optChanged && _processed){
-                _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
+                _currentUri = GetImageUri(this,_resultBitmap);
+                _currentUriStr = _currentUri.toString();
+                _inputBitmap = GetBitmapFromUri(_currentUri);
             }
             else {
-                _inputBitmap = GetBitmapFromUri(_imageUri);
+//                if(_resultBitmap != null){
+//                    _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
+//                }
+                //else{
+                    _inputBitmap = GetBitmapFromUri((_resultBitmap != null) ? GetImageUri(this,_resultBitmap) : _imageUri);
+//                }
             }
             //_inputBitmap = GetBitmapFromUri(_imageUri);
         } catch (IOException e) {
@@ -954,17 +961,6 @@ public class Editor extends AppCompatActivity {
         // --------------------------------------------------------------------- JCt przesnuesc
         _processed = false;
 
-//        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-//        _bitmapsOut[_currentBitmap].compress(Bitmap.CompressFormat.JPEG, 100, stream);
-//        Glide.with(this)
-//                .load(stream.toByteArray())
-//                .asBitmap()
-//                .diskCacheStrategy( DiskCacheStrategy.NONE )
-//                .skipMemoryCache( false )
-//                .into(_zoomPinchImageView);
-
-
-//        _zoomPinchImageView.SetBitmap(_bitmapsOut[_currentBitmap]);
         _currentBitmap += (_currentBitmap + 1) % NUM_BITMAPS;
         ++_initCounter;
     }
@@ -1077,7 +1073,6 @@ public class Editor extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
-        //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivityForResult(intent, REQUEST_CODE);
     }
 
@@ -1097,17 +1092,12 @@ public class Editor extends AppCompatActivity {
         _intentHasExtras = resultData.hasExtra("IMAGE_TAKEN");
         if(resultData!=null) {
             _imageUri = (_intentHasExtras) ? Uri.fromFile(new File((Uri.parse(_launchedIntent.getStringExtra("IMAGE_TAKEN")).getPath()))) : resultData.getData();
-//            Glide.with(this).load(_imageUri).centerCrop().into(_zoomPinchImageView); //uzywane jako thumbnail
-//
-            //SetReducedImageSize();
 
             Glide
                     .with( this )
                     .load(_imageUri)
                     .diskCacheStrategy( DiskCacheStrategy.NONE )
                     .skipMemoryCache( true )
-                   // .override(1920,1080)
-                   // .fitCenter()
                     .into( _zoomPinchImageView);
 
 
@@ -1232,6 +1222,7 @@ public class Editor extends AppCompatActivity {
 
     public void CancelAdjustment(View v){
 //        ChangeImageOrientation(_inputBitmap);
+        Toast.makeText(this, "dupaaa  a a  a a ", Toast.LENGTH_LONG).show();
     }
 
 
