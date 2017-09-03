@@ -159,7 +159,7 @@ public class Editor extends AppCompatActivity {
     boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false;
     boolean _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true, _imgFulScreenDisabled = true;
 
-    int _initCounter = 0;
+    int _initCounter = 0, changesCounter = 0;
     ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
     MenuItem _saveItem;
 
@@ -518,32 +518,42 @@ public class Editor extends AppCompatActivity {
         public void onClick(DialogInterface dialog, int which) {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
-//                    if(_resultBitmap != null){
-//                        _processedUri = Uri.parse(_currentUriStr.toString());
-//                        try {
-//                            _inputBitmap = GetBitmapFromUri(_processedUri);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
+                    ++changesCounter;
+
+                    if(_resultBitmap != null){
+                        _processedUri = Uri.parse(_currentUriStr.toString());
+                        try {
+                            Toast.makeText(getApplicationContext(), "OLD "+_currentUri + " NEW "+_processedUri, Toast.LENGTH_LONG).show();
+                            _inputBitmap = GetBitmapFromUri(_processedUri);
+                            _resultBitmap = Bitmap.createBitmap(_inputBitmap);
+                        }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
-//                    if(_processedUriStr != null){
-//                        _imageUri = (_processedUriStr.length() > 0) ? Uri.parse(_processedUriStr) : _imageUri;
-//                        try {
-//                            _inputBitmap = GetBitmapFromUri(_imageUri);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                    else{
-//                        try {
-//                            _inputBitmap = GetBitmapFromUri(_imageUri);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                    _zoomPinchImageView.SetBitmap(_inputBitmap);
+                    Toast.makeText(getApplicationContext(), "Prev chcnges "+changesCounter, Toast.LENGTH_LONG).show();
+                    if(_processedUriStr != null){
+                        _imageUri = (_processedUriStr.length() > 0) ? Uri.parse(_processedUriStr) : _imageUri;
+                        ShowAlert("NEW" + Uri.parse(_processedUriStr) + " OLD "+_imageUri,_confirmListener,false);
+                        try {
+                            _inputBitmap = GetBitmapFromUri(_imageUri);
+                            _resultBitmap = Bitmap.createBitmap(_inputBitmap);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else{
+                        try {
+                            _inputBitmap = GetBitmapFromUri(_imageUri);
+                            _resultBitmap = Bitmap.createBitmap(_inputBitmap);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    _zoomPinchImageView.SetBitmap(_inputBitmap);
                     break;
             }
         }
@@ -561,7 +571,7 @@ public class Editor extends AppCompatActivity {
 
     void CreateScript() {
         RenderScript rs = RenderScript.create(this);
-
+// UWAZAC TUTAJ s
         _inAllocation = Allocation.createFromBitmap(rs, _inputBitmap);
         // to unsharp mask
         _orgImageAlloc = Allocation.createFromBitmap(rs, _tmpBitmaps[0]);
