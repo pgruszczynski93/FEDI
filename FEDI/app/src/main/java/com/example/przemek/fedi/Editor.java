@@ -159,8 +159,8 @@ public class Editor extends AppCompatActivity {
     boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false;
     boolean _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true, _imgFulScreenDisabled = true;
 
-    int _initCounter = 0, changesCounter = 0;
-    ArrayList<Bitmap> _history = new ArrayList<Bitmap>();
+    int _initCounter = 0, _changesInCategories = 0;
+    ArrayList<Bitmap> _history = new ArrayList<>();
     MenuItem _saveItem;
 
     LinearLayout _topMenu, _bottoMenu;
@@ -516,42 +516,39 @@ public class Editor extends AppCompatActivity {
     DialogInterface.OnClickListener _changeOptionListener = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
+            _changesInCategories = 0;
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
-                    ++changesCounter;
+                    if(_optChanged && _processed){
+                        //Toast.makeText(getApplicationContext(), "PRZETWORZONE  + zmiana", Toast.LENGTH_LONG).show();
+                        ApplyBitmapChanges(getApplicationContext());
+                    }
+                    else if(_processed){
+                        //Toast.makeText(getApplicationContext(), "PRZETWORZONE", Toast.LENGTH_LONG).show();
+                        ApplyBitmapChanges(getApplicationContext());
+
+                    }
+                    else {
+                        Toast.makeText(getApplicationContext(), "NIE PRZETWORZONE", Toast.LENGTH_LONG).show();
+                    }
 
                     if(_resultBitmap != null){
-                        _processedUri = Uri.parse(_currentUriStr.toString());
-                        try {
-                            Toast.makeText(getApplicationContext(), "OLD "+_currentUri + " NEW "+_processedUri, Toast.LENGTH_LONG).show();
-                            _inputBitmap = GetBitmapFromUri(_processedUri);
-                            _resultBitmap = Bitmap.createBitmap(_inputBitmap);
-                        }
-                        catch (IOException e)
-                        {
-                            e.printStackTrace();
-                        }
+                        _processedUriStr = _currentUriStr;
+                        _processedUri = Uri.parse(_processedUriStr);
+                    }
+                    else{
+                        Toast.makeText(getApplicationContext(), "DUPA", Toast.LENGTH_LONG).show();
                     }
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
-                    Toast.makeText(getApplicationContext(), "Prev chcnges "+changesCounter, Toast.LENGTH_LONG).show();
                     if(_processedUriStr != null){
                         _imageUri = (_processedUriStr.length() > 0) ? Uri.parse(_processedUriStr) : _imageUri;
-                        ShowAlert("NEW" + Uri.parse(_processedUriStr) + " OLD "+_imageUri,_confirmListener,false);
-                        try {
-                            _inputBitmap = GetBitmapFromUri(_imageUri);
-                            _resultBitmap = Bitmap.createBitmap(_inputBitmap);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
                     }
-                    else{
-                        try {
-                            _inputBitmap = GetBitmapFromUri(_imageUri);
-                            _resultBitmap = Bitmap.createBitmap(_inputBitmap);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    try {
+                        _inputBitmap = GetBitmapFromUri(_imageUri);
+                        _resultBitmap = Bitmap.createBitmap(_inputBitmap);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                     _zoomPinchImageView.SetBitmap(_inputBitmap);
                     break;
@@ -651,6 +648,7 @@ public class Editor extends AppCompatActivity {
     View.OnClickListener btnClicked = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            ++_changesInCategories;
             _optionsLabel = ((Button) v).getText().toString();
             ResetSliderLayout();
             //_sliderOptLayout.setVisibility(View.VISIBLE);
@@ -710,6 +708,9 @@ public class Editor extends AppCompatActivity {
             }
             else if(_optionsLabel.equals("Płaskorzeźba")){
                 SetOptionSlider(0,12,0.0f);
+            }
+            else if(_optionsLabel.equals("Histogram")){
+                ShowAlert("Obecnie niedostępne.", _confirmListener, false);
             }
             else{
                 _processed = true;
@@ -936,19 +937,15 @@ public class Editor extends AppCompatActivity {
                 _optChanged = false;
             }
 
-//
-            if(_optChanged && _processed){
-                _currentUri = GetImageUri(this,_resultBitmap);
-                _currentUriStr = _currentUri.toString();
-                _inputBitmap = GetBitmapFromUri(_currentUri);
+// POPRAWIC TE GOWNO
+            if((_optChanged && _processed)){
+                ApplyBitmapChanges(this);
+//                _currentUri = GetImageUri(this,_resultBitmap);
+//                _currentUriStr = _currentUri.toString();
+//                _inputBitmap = GetBitmapFromUri(_currentUri);
             }
             else {
-//                if(_resultBitmap != null){
-//                    _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
-//                }
-                //else{
-                    _inputBitmap = GetBitmapFromUri((_resultBitmap != null) ? GetImageUri(this,_resultBitmap) : _imageUri);
-//                }
+                _inputBitmap = GetBitmapFromUri((_resultBitmap != null ) ? GetImageUri(this,_resultBitmap) : _imageUri);
             }
             //_inputBitmap = GetBitmapFromUri(_imageUri);
         } catch (IOException e) {
@@ -973,6 +970,17 @@ public class Editor extends AppCompatActivity {
 
         _currentBitmap += (_currentBitmap + 1) % NUM_BITMAPS;
         ++_initCounter;
+    }
+
+
+    void ApplyBitmapChanges(Context context){
+        _currentUri = GetImageUri(context,_resultBitmap);
+        _currentUriStr = _currentUri.toString();
+        try {
+            _inputBitmap = GetBitmapFromUri(_currentUri);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //podzielic te metode na inne metody
@@ -1145,7 +1153,7 @@ public class Editor extends AppCompatActivity {
             _groupChanged = false;
         }
         else{
-            if(_prevBottomButton.length() > 0){
+            if(_prevBottomButton.length() > 0 && _changesInCategories > 0){
                 ShowAlert("Zapisać zmiany w grupie \""+_prevBottomButton
                         +"\"?",_changeOptionListener, true);
             }
