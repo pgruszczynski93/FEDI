@@ -155,8 +155,8 @@ public class Editor extends AppCompatActivity {
     public ZoomPinchImageView _zoomPinchImageView;
     Intent _launchedIntent;
 
-    Uri _imageUri = null, _processedUri = null, _currentUri ;
-    boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false;
+    Uri _imageUri = null, _processedUri = null, _currentUri , _orgUri;
+    boolean _intentHasExtras, _processed, _optChanged = false, _groupChanged = false, _inFullScreen = false;
     boolean _doubleBackToExitPressedOnce, _uiShowed, _previewDisabled = true, _imgFulScreenDisabled = true;
 
     int _initCounter = 0, _changesInCategories = 0;
@@ -541,16 +541,7 @@ public class Editor extends AppCompatActivity {
                     }
                     break;
                 case DialogInterface.BUTTON_NEGATIVE:
-                    if(_processedUriStr != null){
-                        _imageUri = (_processedUriStr.length() > 0) ? Uri.parse(_processedUriStr) : _imageUri;
-                    }
-                    try {
-                        _inputBitmap = GetBitmapFromUri(_imageUri);
-                        _resultBitmap = Bitmap.createBitmap(_inputBitmap);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    _zoomPinchImageView.SetBitmap(_inputBitmap);
+                    CancelBitmapUpdate();
                     break;
             }
         }
@@ -566,9 +557,22 @@ public class Editor extends AppCompatActivity {
         }
     };
 
+    void CancelBitmapUpdate(){
+        if(_processedUriStr != null){
+            _imageUri = (_processedUriStr.length() > 0) ? Uri.parse(_processedUriStr) : _imageUri;
+        }
+        try {
+            _inputBitmap = GetBitmapFromUri(_imageUri);
+            _resultBitmap = Bitmap.createBitmap(_inputBitmap);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        _zoomPinchImageView.SetBitmap(_inputBitmap);
+    }
+
     void CreateScript() {
         RenderScript rs = RenderScript.create(this);
-// UWAZAC TUTAJ s
+
         _inAllocation = Allocation.createFromBitmap(rs, _inputBitmap);
         // to unsharp mask
         _orgImageAlloc = Allocation.createFromBitmap(rs, _tmpBitmaps[0]);
@@ -649,6 +653,7 @@ public class Editor extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             ++_changesInCategories;
+            _bottoMenu.setVisibility(_changesInCategories > 0 ? View.VISIBLE : View.INVISIBLE);
             _optionsLabel = ((Button) v).getText().toString();
             ResetSliderLayout();
             _currOptionButton = _optionsLabel;
@@ -787,6 +792,7 @@ public class Editor extends AppCompatActivity {
         _topMenu = (LinearLayout) findViewById(R.id.topMenuPanel);
         _bottoMenu = (LinearLayout)findViewById(R.id.bottomMenuLayout);
         _zoomPinchImageView = (ZoomPinchImageView)findViewById(R.id.zoomPinchImageView);
+        _bottoMenu.setVisibility(View.INVISIBLE);
         CheckActivity();
         InitOptionsBar();
         InitSliderListener();
@@ -846,29 +852,31 @@ public class Editor extends AppCompatActivity {
                 CheckGetInfoUriPermission();
                 return true;
             case R.id.action_preview:
-                ShowUI();
-                _previewDisabled = !_previewDisabled;
-                try{
-                    if(_previewDisabled){
+                if(!_inFullScreen){
+                    ShowUI();
+                    _previewDisabled = !_previewDisabled;
+                    try{
+                        if(_previewDisabled){
 
-                        //sprawdzac czy obraz byl przetworzony bo inaczej krasz
-                        item.setIcon(R.mipmap.review);
-                        if(_resultBitmap !=null){
-                            _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
-                        }
+                            //sprawdzac czy obraz byl przetworzony bo inaczej krasz
+                            item.setIcon(R.mipmap.review);
+                            if(_resultBitmap !=null){
+                                _inputBitmap = GetBitmapFromUri(GetImageUri(this,_resultBitmap));
+                            }
 
-                    }
-                    else{
-                        if(_resultBitmap == null){
-                            ShowAlert("Zdjęcie nie zostało wcześniej zmodyfikowane.", _confirmListener, false);
                         }
-                        item.setIcon(R.mipmap.review_on);
-                        _inputBitmap = GetBitmapFromUri(_imageUri);
+                        else{
+                            if(_resultBitmap == null){
+                                ShowAlert("Zdjęcie nie zostało wcześniej zmodyfikowane.", _confirmListener, false);
+                            }
+                            item.setIcon(R.mipmap.review_on);
+                            _inputBitmap = GetBitmapFromUri(_orgUri);
+                        }
+                        _zoomPinchImageView.SetBitmap(_inputBitmap);
                     }
-                    _zoomPinchImageView.SetBitmap(_inputBitmap);
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
                 return true;
             case R.id.action_open:
@@ -885,6 +893,7 @@ public class Editor extends AppCompatActivity {
                     return true;
                 }
             case R.id.action_fullscreen:
+                _inFullScreen = !_inFullScreen;
                 if(_previewDisabled){
                     _imgFulScreenDisabled = !_imgFulScreenDisabled;
                     ChangeMenuItemIcon(item, (_imgFulScreenDisabled) ? R.mipmap.full_screen : R.mipmap.full_screen_on);
@@ -1115,6 +1124,7 @@ public class Editor extends AppCompatActivity {
                     .skipMemoryCache( true )
                     .into( _zoomPinchImageView);
 
+            _orgUri = _imageUri;
 
             try {
                 _inputBitmap = GetBitmapFromUri(_imageUri);
@@ -1154,6 +1164,7 @@ public class Editor extends AppCompatActivity {
                 ShowAlert("Zapisać zmiany w grupie \""+_prevBottomButton
                         +"\"?",_changeOptionListener, true);
             }
+            _bottoMenu.setVisibility(View.INVISIBLE);
             _groupChanged = true;
         }
 
@@ -1236,8 +1247,9 @@ public class Editor extends AppCompatActivity {
     }
 
     public void CancelAdjustment(View v){
-//        ChangeImageOrientation(_inputBitmap);
-        Toast.makeText(this, "dupaaa  a a  a a ", Toast.LENGTH_LONG).show();
+        _changesInCategories = 0;
+        _bottoMenu.setVisibility(View.INVISIBLE);
+        CancelBitmapUpdate();
     }
 
 

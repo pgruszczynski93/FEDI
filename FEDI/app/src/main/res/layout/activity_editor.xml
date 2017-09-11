@@ -191,7 +191,8 @@
             android:layout_alignParentEnd="true"
             android:layout_weight="1"
             android:onClick="CancelAdjustment"
-            android:text="Anuluj" />
+            android:text="Anuluj przekształcenie grupy" />
+        <!--
 
         <Button
             android:id="@+id/histBackButton"
@@ -223,6 +224,8 @@
             android:layout_weight="1"
             android:onClick="SaveAdjustment"
             android:text="OK" />
+
+            -->
     </LinearLayout>
 
     <!--
