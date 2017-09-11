@@ -10,7 +10,7 @@ import android.widget.Toast;
 
 public class HomeActivity extends AppCompatActivity {
 
-    static int SPLASH_TIMEOUT = 1500;
+    static int SPLASH_TIMEOUT = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

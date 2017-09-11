@@ -651,9 +651,6 @@ public class Editor extends AppCompatActivity {
             ++_changesInCategories;
             _optionsLabel = ((Button) v).getText().toString();
             ResetSliderLayout();
-            //_sliderOptLayout.setVisibility(View.VISIBLE);
-
-
             _currOptionButton = _optionsLabel;
             InitRenderScriptOps();
             CreateScript();
@@ -725,7 +722,6 @@ public class Editor extends AppCompatActivity {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
         String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
-        //_copiedUri = Uri.parse(path);
         return Uri.parse(path);
     }
 
@@ -970,6 +966,7 @@ public class Editor extends AppCompatActivity {
 
         _currentBitmap += (_currentBitmap + 1) % NUM_BITMAPS;
         ++_initCounter;
+
     }
 
 
@@ -1265,7 +1262,6 @@ public class Editor extends AppCompatActivity {
         else OpenImageBrowser();
     }
 
-    //without glide
     Bitmap GetBitmapFromUri(Uri uri) throws IOException {
         ParcelFileDescriptor parcelFileDescriptor = getContentResolver().openFileDescriptor(uri,"r");
         FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
@@ -1278,32 +1274,22 @@ public class Editor extends AppCompatActivity {
             int newHeight = 1800, newWidth;
             float aspectRatio = (bmpW > bmpH) ? ((float)bmpW/(float)bmpH) : ((float)bmpW/(float)bmpH);
             newWidth = Math.round(newHeight*aspectRatio);
-          //  Toast.makeText(this, "Res "+newHecight+" "+newWidth,Toast.LENGTH_SHORT).show();
             return  Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
         }
         else{
-           // Toast.makeText(this, "Res "+bmpH+" "+bmpW,Toast.LENGTH_SHORT).show();
             return bitmap;
         }
     }
 
-    //dodać sprawdzanie orientacji zdjecia po zrobieniu go
-    /***
-     * OPCJONALNE
-     *
-     */
 
     /***
      * Metoda odpowiedzialna za wyświetlenie metadanych ze zdjęcia.
      */
     void ShowImageInfo(){
         Intent info = new Intent(Editor.this, ImageInfo.class);
-
         info.putExtra("IMAGE_INFO",UriConverter.getPath(this, _imageUri));
         startActivity(info);
     }
-
-    // dorobić interfejs do pozwolen
 
     /***
      * Metoda odpowidzialna za przydzielenie uprawnień do czytania URI.

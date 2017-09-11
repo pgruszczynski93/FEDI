@@ -7,9 +7,9 @@
     <application
         android:allowBackup="true"
         android:largeHeap="true"
-        android:icon="@mipmap/fedi_logo"
+        android:icon="@mipmap/fedi_2_icon"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/fedi_logo"
+        android:roundIcon="@mipmap/fedi_2_icon"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
