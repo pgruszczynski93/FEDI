@@ -30,7 +30,6 @@ static inline uint8_t GrayScaleValue0255(const float3 pixel){
 static float3 RGBtoYUV(const float3 rgb){
     float3 yuv;
     yuv.x = dot(rgb, yuv_vector);
-    //wykonujac te dzialanie potem dodać
     yuv.y = ((0.492f * (rgb.b - yuv.x))+1)/2;
     yuv.z = ((0.877f * (rgb.r - yuv.x))+1)/2;
     return yuv;

@@ -4,8 +4,8 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-rs_allocation img_in;
-uint32_t width, height;
+rs_allocation img_in;   // alokacja wejściowa
+uint32_t width, height; // szerokośc, wysokośc
 float intensity;
 float mix_1, mix_2;
 
@@ -16,7 +16,7 @@ uchar4 __attribute__((kernel)) soft_glow(uchar4 pixel_in, uint32_t x, uint32_t y
     float3 rgb;
 
     if(x < (width-1) && y < (height-1)){
-        curr_pix = rsUnpackColor8888(*(const uchar4*)rsGetElementAt(img_in, x, y));
+        curr_pix = rsUnpackColor8888(*(const uchar4*)rsGetElementAt(img_in, x+1, y+1));
         rgb = 1.0f - (1.0f - full_pix.rgb) * (1.0f - curr_pix.rgb);
     }
     else{

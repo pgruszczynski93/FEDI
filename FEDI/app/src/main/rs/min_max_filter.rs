@@ -4,16 +4,17 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-rs_allocation img_in;
-uint32_t width, height;
-int32_t type, size;
+rs_allocation img_in;   // alokacja wejściowa
+uint32_t width, height; // rozmiary zdjęcia
+int32_t type, size;     // wybór filtra i rozmiar zdjęcia
 
-
+// ustawienie wartości początkowych
 void setup(){
     width = rsAllocationGetDimX(img_in);
     height = rsAllocationGetDimY(img_in);
 }
 
+// kernel obliczający wartość piksela na podstawie minimalnej/maksymalnej wartości z otoczenia
 uchar4 __attribute__((kernel)) min_max_filter(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba;
     uint32_t pos_x = x+1, pos_y = y+1;

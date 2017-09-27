@@ -5,16 +5,17 @@
 #pragma rs_fp_relaxed
 
 
-rs_allocation img_in;
-int32_t width, height;
-int32_t size;
+rs_allocation img_in; // alokacja wejsciowa
+int32_t width, height;  // szerokość i wysokość
+int32_t size;   // rozmiar
 
+// inicjalizacja zmiennych
 void setup(){
     width = rsAllocationGetDimX(img_in);
     height = rsAllocationGetDimY(img_in);
 }
 
-
+// kernel rozmywający - uśredniający wartość piksela na podstawie średniej z sąsiadów
 uchar4 __attribute__((kernel)) average_filter(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba;
     float3 rgb = rgba.rgb;
@@ -45,6 +46,7 @@ uchar4 __attribute__((kernel)) average_filter(uchar4 in, uint32_t x, uint32_t y)
     return rsPackColorTo8888(rgb);
 }
 
+// kernel rozmywający - uśredniający wartość piksela na podstawie mediany zbioru sąsiadów
 uchar4 __attribute__((kernel)) median_filter(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba;
     float3 rgb = rgba.rgb;

@@ -7,11 +7,12 @@
 float contrast_value;
 // liczony tylko dla wspolczynnika kontrastu (bez jasnosci)
 
+// obliczenie współczynnika kontrastu
 static float get_contrast_factor(){
      return (1.0f + contrast_value) * (1.0f + contrast_value);;
 }
-// wzor: Truncate(factor * (Red(colour)   - 128) + 128) truncate - klampowanie
 
+// kernel zmiany kontrastu piksela
 uchar4 __attribute__((kernel)) contrast(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pixel = rsUnpackColor8888(pixel_in);
     float3 rgb_pix = full_pixel.rgb;

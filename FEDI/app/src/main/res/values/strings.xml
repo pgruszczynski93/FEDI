@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">FEDI</string>
     <string name="action_img_info">Informacje</string>
+    <string name="action_hardware_info">Informacje o sprzęcie</string>
     <string name="action_resolution">Rozdzielczość</string>
     <string name="action_reset_scale">Do ekranu</string>
     <string name="action_current_scale">Przybliżenie</string>
@@ -13,4 +14,5 @@
     <string name="hist_nextbutton">\u002D\u003E</string>
 
     <color name="bar_gray">#696969</color>
+    <string name="title_activity_main">MainActivity</string>
 </resources>

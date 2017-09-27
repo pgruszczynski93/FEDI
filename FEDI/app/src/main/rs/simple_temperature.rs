@@ -4,8 +4,10 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
+// wartosc modyfikująca temperature
 float temperature_value;
 
+// kernel odpowiedzialny za zmiane postrzegalnej temperatury barwowej piksela
 uchar4 __attribute__((kernel)) simple_temperature(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pixel = rsUnpackColor8888(pixel_in);
     float3 rgb_pix = full_pixel.rgb;

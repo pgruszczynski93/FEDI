@@ -40,7 +40,7 @@ public class MainMenu extends AppCompatActivity {
     static final int CAMERA_ACTIVITY_RESULT = 0, EXTERNAL_STORAGE_RESULT = 1, MAIN_MENU_REQUEST_CODE = 0;
 
     boolean _doubleBackToExitPressedOnce;
-
+    int _selectedTool;
     /***
      * Obiekt będący refenencją do okrągłego menu;
      * Ladowana intencja z menu;
@@ -60,7 +60,6 @@ public class MainMenu extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         HideNotifAndTitleBars();
         setContentView(R.layout.activity_main_menu);
-
         InstantiateCircleMenu();
     }
 
@@ -92,8 +91,11 @@ public class MainMenu extends AppCompatActivity {
             .setOnMenuSelectedListener(new OnMenuSelectedListener() {
                 @Override
                 public void onMenuSelected(int i) {
+                    AskPermissions();
+                    _selectedTool = i;
                     if(i==1){
-                        AskCameraPermissions();
+                        //AskPermissions();
+                        MakePhoto();
                     }
                     else{
                         _nextIntent = new Intent(MainMenu.this, ((i==0) ? Editor.class : Info.class));
@@ -103,13 +105,26 @@ public class MainMenu extends AppCompatActivity {
             });
     }
 
+    void CheckButtonPressed(){
+        if(_selectedTool == 0){
+            _nextIntent = new Intent(MainMenu.this, Editor.class);
+            startActivity(_nextIntent);
+        }
+        else if(_selectedTool == 1)
+            MakePhoto();
+        else{
+            _nextIntent = new Intent(MainMenu.this, Info.class);
+            startActivity(_nextIntent);
+        }
+    }
+
     /***
      * Metoda prosząca o odpowiednie uprawnienia podczas użytkownia aplikacji.
      */
 // pytanie o uprawnienia do aparatu
-    void AskCameraPermissions(){
+    void AskPermissions(){
         if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
-            MakePhoto();
+            //CheckButtonPressed();
         }
         else{
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -131,10 +146,10 @@ public class MainMenu extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResult){
         if(requestCode == EXTERNAL_STORAGE_RESULT){
             if(grantResult[0] == PackageManager.PERMISSION_GRANTED){
-                MakePhoto();
+               // CheckButtonPressed();
             }
             else{
-                Toast.makeText(this,"Czy chcesz zmodyfikować zawartość Karty Pamięci?", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Należy nadać uprawnienia!", Toast.LENGTH_SHORT).show();
             }
         }
         else{

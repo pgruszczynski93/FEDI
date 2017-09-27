@@ -4,6 +4,7 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
+// kernel obliczający skalę szarości piksela dokonując desaturacji
 uchar4 __attribute__((kernel)) grayscale_desaturation(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pix = rsUnpackColor8888(pixel_in);
     float3 rgb = full_pix.rgb;

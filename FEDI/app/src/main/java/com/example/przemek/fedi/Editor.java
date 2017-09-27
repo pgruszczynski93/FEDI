@@ -27,6 +27,7 @@ import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.ScriptIntrinsicBlend;
 import android.support.v8.renderscript.ScriptIntrinsicBlur;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -58,20 +59,20 @@ import java.util.ArrayList;
 public class Editor extends AppCompatActivity {
 
     static final int REQUEST_CODE = 0, READ_URI_PERMISSION = 1;
-    final int ADJUSTMENT_COUNT = 8, DETAILS_COUNT = 7, FILTERS_COUNT = 15, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 4,
-            GRAYSCALE_COUNT = 6, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 4, BLUR_COUNT = 3, HISTOGRAM_COUNT = 3;
+    final int ADJUSTMENT_COUNT = 8, DETAILS_COUNT = 7, FILTERS_COUNT = 13, WHITE_BALANCE_COUNT = 2, ROTATIONS_COUNT = 4,
+            GRAYSCALE_COUNT = 5, NATURALFILTERS_COUNT = 5, NOISE_COUNT = 4, BLUR_COUNT = 3, HISTOGRAM_COUNT = 2;
     final String[] _adjustmentValues = {"Jasność", "Kontrast", "Nasycenie", "Gamma", "Wypełnienie światłem", "Prześwietlenia", "Cienie", "Temperatura"};
     final String[] _detailsValues = {"Proste wyostrzanie", "Unsharp mask", "Maksimum", "Minimum", "Roberts", "Sobel", "Płaskorzeźba"};
     final String[] _filtersValues = {"Wypełnienie światłem", "Winietowanie", "Negatyw", "Solaryzacja",
-            "Sepia", "Bloom", "Soft glow", "Mozaika", "Farba olejna", "Zamiana kanału",
-            "Kwantyzacja", "Poruszenie", "Czarne światło", "Kropkowanie", "Progowanie"};
+            "Sepia", "Bloom", "Soft glow", "Mozaika", /*"UFO", "Farba olejna",*/ "Zamiana kanału",
+            "Kwantyzacja", "Poruszenie", "Czarne światło", /*"Kropkowanie",*/ "Progowanie"};
     final String[] _whiteBalanceValues = {"Temperatura", "Odcień"};
     final String[] _rotationValues = {"90 lewo", "90 prawo", "Przerzuć pion", "Przerzuć poziom"};
-    final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał", "N-Szarości"};
+    final String[] _grayscalesValues = {"Średnia", "Luminancja", "Desaturacja", "Dekompozycja", "1-Kanał"/*, "N-Szarości"*/};
     final String[] _naturalFiltersValues = {"Ogień", "Lód", "Woda", "Ziemia", "Atmosfera"};
     final String[] _noiseFiltersValues = {"Szum", "Szum pieprz i sól", "Odszumianie: średnia", "Odszumianie: mediana"};
     final String[] _blurFiltersValues = {"Rozmycie", "Rozmycie: średnia", "Rozmycie: mediana"};
-    final String[] _histogramFiltersValues = {"Histogram","Wyrównanie","Rozciągnięcie"};
+    final String[] _histogramFiltersValues = {/*"Histogram",*/"Wyrównanie","Rozciągnięcie"};
 
 
     //    FediCore _coreOperation;
@@ -128,12 +129,14 @@ public class Editor extends AppCompatActivity {
     ScriptC_emboss_relief_filter _rsEmbossRel;
     ScriptC_noise_filters _rsNoise;
     ScriptC_denoise_filters _rsDenoise;
+    ScriptC_ufo_mosaic _rsUfoMosaic;
     //**************************
     RenderScriptTask _currentTask;
     RenderScript rs;
 
     Bitmap _inputBitmap, _resultBitmap;
 
+    long _startTimeView, _stopTimeView, _startTimeRS, _stopTimeRS;
 
     //tablice: dopasowań, detali, filtrów, balansu bieli
     Button[] _adjustmentsButtonsList, _detailsButtonList, _filtersButtonList, _wbButtonList, _rotationButtonList,
@@ -172,6 +175,10 @@ public class Editor extends AppCompatActivity {
 
         public RenderScriptTask(String rsKernel){
             _rsKernel = rsKernel;
+        }
+
+        protected void onPreExecute(){
+            _startTimeRS = System.currentTimeMillis();
         }
 
         protected Integer doInBackground(Float... values) {
@@ -266,7 +273,7 @@ public class Editor extends AppCompatActivity {
                 }
                 else if(_rsKernel.equals("Dekompozycja")){
                     _rsGSDecomposition.set_decomposition_type(values[0].intValue());
-                    _rsGSDecomposition.forEach_grayscale_desaturation(_inAllocation, _outAllocations[index]);
+                    _rsGSDecomposition.forEach_grayscale_decomposition(_inAllocation, _outAllocations[index]);
                 }
                 else if(_rsKernel.equals("1-Kanał")){
                     _rsGSOnechannel.set_channel(values[0].intValue());
@@ -306,6 +313,11 @@ public class Editor extends AppCompatActivity {
                     _rsMosaic.set_img_in(_inAllocation);
                     _rsMosaic.set_size(values[0].intValue()+1);
                     _rsMosaic.forEach_mosaic(_inAllocation, _outAllocations[index]);
+                }
+                else if(_rsKernel.equals("UFO")){
+                    _rsUfoMosaic.set_img_in(_inAllocation);
+                    _rsUfoMosaic.set_size(values[0].intValue()+1);
+                    _rsUfoMosaic.forEach_ufo_mosaic(_inAllocation, _outAllocations[index]);
                 }
                 else if(_rsKernel.equals("Farba olejna")){
                     _rsOilPaint.set_img_in(_inAllocation);
@@ -347,6 +359,7 @@ public class Editor extends AppCompatActivity {
                     _rsHistogramEq.invoke_equalize_y_histogram();
                     _rsHistogramEq.forEach_equalize_histogram_yuvrgb(_outAllocations[index], _inAllocation);
                     _outAllocations[index] = _inAllocation;
+                    // zamienic na _inAllocation.copyFrom(_outAllocation[index])
                 }
                 else if(_rsKernel.equals("Rozciągnięcie")){
                     _rsHistogramSt.set_img_in(_inAllocation);
@@ -471,6 +484,7 @@ public class Editor extends AppCompatActivity {
 
         protected void onPostExecute(Integer result) {
             updateView(result);
+            _stopTimeRS = System.currentTimeMillis() - _startTimeRS;
         }
 
         protected void onCancelled(Integer result) {
@@ -631,6 +645,7 @@ public class Editor extends AppCompatActivity {
         _rsEmbossRel = new ScriptC_emboss_relief_filter(rs);
         _rsNoise = new ScriptC_noise_filters(rs);
         _rsDenoise = new ScriptC_denoise_filters(rs);
+        _rsUfoMosaic = new ScriptC_ufo_mosaic(rs);
     }
 
 
@@ -642,6 +657,7 @@ public class Editor extends AppCompatActivity {
         _currentTask.execute(f);
     }
 
+    // sprawzić to
     void SetOptionSlider(int progress, int max, float imageValue){
         _sliderOptLayout.setVisibility(View.VISIBLE);
         _optSlider.setProgress(progress);
@@ -696,7 +712,7 @@ public class Editor extends AppCompatActivity {
             else if(_optionsLabel.equals("Kwantyzacja")){
                 SetOptionSlider(0,31,1.0f);
             }
-            else if(_optionsLabel.equals("Mozaika")){
+            else if(_optionsLabel.equals("Mozaika") || _optionsLabel.equals("UFO")){
                 SetOptionSlider(0,100,1.0f);
             }
             else if(_optionsLabel.equals("Farba olejna")){
@@ -715,9 +731,14 @@ public class Editor extends AppCompatActivity {
                 ShowAlert("Obecnie niedostępne.", _confirmListener, false);
             }
             else{
-                _processed = true;
-                UpdateImage(0.0f);
-                _sliderOptLayout.setVisibility(View.INVISIBLE);
+                if((_optionsLabel.equals("90 lewo") || _optionsLabel.equals("90 prawo")) && (_inputBitmap.getHeight() != _inputBitmap.getWidth())){
+                    ShowAlert("Nie można obrócić zdjęcia - niezgodne wymiary",_confirmListener,false);
+                }
+                else{
+                    _processed = true;
+                    UpdateImage(0.0f);
+                    _sliderOptLayout.setVisibility(View.INVISIBLE);
+                }
             }
 
         }
@@ -744,7 +765,7 @@ public class Editor extends AppCompatActivity {
                 value = (float)progress/100.0f;
             }
             else if(_optionsLabel.equals("Kwantyzacja") || _optionsLabel.equals("Mozaika") || _optionsLabel.equals("Farba olejna") ||
-                _optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom") ){
+                _optionsLabel.equals("Rozmycie") || _optionsLabel.equals("Bloom") || _optionsLabel.equals("UFO")){
                 value = progress+1;
             }
             else if(_optionsLabel.equals("Czarne światło") || _optionsLabel.equals("Dekompozycja") || _optionsLabel.equals("1-Kanał") ||
@@ -849,8 +870,11 @@ public class Editor extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.action_img_info:
-                CheckGetInfoUriPermission();
+                CheckGetGetSDPermission();
                 return true;
+            //case R.id.action_hardware_info:
+                //ShowHardwareInfo();
+             //   return true;
             case R.id.action_preview:
                 if(!_inFullScreen){
                     ShowUI();
@@ -928,7 +952,7 @@ public class Editor extends AppCompatActivity {
     void InitRenderScriptOps() {
         try {
 
-            Toast.makeText(getApplicationContext(), "2N "+_currOptionButton + " S " + _prevOptionButton+" OPT "+_optChanged + " PROCS "+_processed + " GRUP "+_groupChanged, Toast.LENGTH_LONG).show();
+            //Toast.makeText(getApplicationContext(), "2N "+_currOptionButton + " S " + _prevOptionButton+" OPT "+_optChanged + " PROCS "+_processed + " GRUP "+_groupChanged, Toast.LENGTH_LONG).show();
 
             if(_initCounter < 1){
                 _prevOptionButton = _currOptionButton;
@@ -942,17 +966,19 @@ public class Editor extends AppCompatActivity {
                 _optChanged = false;
             }
 
-// POPRAWIC TE GOWNO
+            _startTimeView = System.currentTimeMillis();
+
             if((_optChanged && _processed)){
                 ApplyBitmapChanges(this);
-//                _currentUri = GetImageUri(this,_resultBitmap);
-//                _currentUriStr = _currentUri.toString();
-//                _inputBitmap = GetBitmapFromUri(_currentUri);
             }
             else {
                 _inputBitmap = GetBitmapFromUri((_resultBitmap != null ) ? GetImageUri(this,_resultBitmap) : _imageUri);
             }
-            //_inputBitmap = GetBitmapFromUri(_imageUri);
+            //_inputBitmap = GetBitmapFromUri(_imageUri); //oryginal
+            _stopTimeView = System.currentTimeMillis() - _startTimeView;
+
+            Toast.makeText(this, "Czas wykonania RS: "+(_stopTimeRS)+" ms\nCzas wykonania VIEW: "+_stopTimeView+" ms", Toast.LENGTH_LONG).show();
+            //Log.e("RENDERSCRIPT_EXEC","Czas wykonania RS: "+(_stopTimeRS)+" ms\nCzas wykonania VIEW: "+_stopTimeView+" ms");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -1252,6 +1278,9 @@ public class Editor extends AppCompatActivity {
         CancelBitmapUpdate();
     }
 
+    void ShowHardwareInfo(){
+        startActivity(new Intent(Editor.this, HardwareInfo.class));
+    }
 
     /***
      * Metoda odpowiedzialna za zresetowanie skali zdjęcia.
@@ -1306,14 +1335,14 @@ public class Editor extends AppCompatActivity {
     /***
      * Metoda odpowidzialna za przydzielenie uprawnień do czytania URI.
      */
-    void CheckGetInfoUriPermission(){
+    void CheckGetGetSDPermission(){
         if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
             ShowImageInfo();
         }
         else{
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if(shouldShowRequestPermissionRationale(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-                    Toast.makeText(this,"Zezwolić aplikacji na odczyt URI?", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,"Zezwolić aplikacji na modyfikację zawartośći pamięci telefonus?", Toast.LENGTH_SHORT).show();
                 }
                 requestPermissions(new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, READ_URI_PERMISSION);
             }

@@ -4,13 +4,14 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-rs_script render_script;
-rs_allocation img_in, img_out;
-int32_t width, height;
-float min_r = 1.0f, min_g = 1.0f, min_b = 1.0f;
+rs_script render_script;    // obiekt renderscriptu
+rs_allocation img_in, img_out;  // alokacje: wejsciowa i wyjsciowa
+int32_t width, height;          // szerokośc i wysokość obrazu
+float min_r = 1.0f, min_g = 1.0f, min_b = 1.0f; //zmienne reprezentujące minimalne i maksymalne wartości skladowych
 float max_r = 0.0f, max_g = 0.0f, max_b = 0.0f;
 
-// ewentualnie przywrocic do wersji z static setup i root
+// funkcja użyta do inicjalizacji zmiennych;
+// wyszukuje także minimalne i maksymalne wartości z kanałow
 void setup(){
     float4 curr_pix;
     float3 curr_rgb;
@@ -31,6 +32,8 @@ void setup(){
         }
     }
 }
+
+// kernel odpowiedzialny za przeprowadzenie rozciągania histogramu kazdego piksela
 uchar4 __attribute__((kernel)) stretch_histogram(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pix = rsUnpackColor8888(pixel_in);
     float3 rgb = full_pix.rgb;

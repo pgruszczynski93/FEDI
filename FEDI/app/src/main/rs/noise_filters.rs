@@ -5,18 +5,19 @@
 #pragma rs_fp_relaxed
 
 
-rs_allocation img_in;
-int32_t width, height;
-float threshold;
-float level;
+rs_allocation img_in;   // alokacja wejściowa
+int32_t width, height;  // szerokość, wysokość
+float threshold;        // wartość progowa generowania szumu
+float level;            //zmienna modyfikująca wartość szumu koloru
 
+// inicjalizacja zmiennych
 void setup(){
     width = rsAllocationGetDimX(img_in);
     height = rsAllocationGetDimY(img_in);
     level = 0.2;
 }
 
-
+// kernel modyfikujący piksel szumem typu pieprz i sól
 uchar4 __attribute__((kernel)) salt_pepper_noise(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba = rsUnpackColor8888(in);
     float3 rgb = rgba.rgb;
@@ -30,7 +31,7 @@ uchar4 __attribute__((kernel)) salt_pepper_noise(uchar4 in, uint32_t x, uint32_t
     return rsPackColorTo8888(rgb);
 }
 
-
+// kernel modyfikujący piksel szumem typu kolor
 uchar4 __attribute__((kernel)) homogeneous_noise(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba = rsUnpackColor8888(in);
     float3 rgb = rgba.rgb;

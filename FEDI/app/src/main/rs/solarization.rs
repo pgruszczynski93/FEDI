@@ -4,8 +4,9 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-float treshold;
+float treshold; // wartość progowa solaryzacji
 
+// kernel poddający piksel efektowi solaryzacji
 uchar4 __attribute__((kernel)) solarization(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pix = rsUnpackColor8888(pixel_in);
     float3 rgb = full_pix.rgb;

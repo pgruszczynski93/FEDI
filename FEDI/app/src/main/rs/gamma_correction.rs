@@ -4,12 +4,15 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
+// wspolczynnik korekcji
 float gamma;
 
+// wzor przekształcenia, color - skladowa piksela
 static float convert_to_gamma(float color){
     return pow(((float)(color)/1.0f), 1.0f/(gamma+0.01));
 }
 
+// kernel przekształcający piksel według korekcji gamma
 uchar4 __attribute__((kernel)) color_shift(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pix = rsUnpackColor8888(pixel_in);
     float3 rgb = full_pix.rgb;

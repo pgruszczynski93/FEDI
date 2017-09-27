@@ -5,11 +5,12 @@
 #pragma rs_fp_relaxed
 
 
-rs_allocation img_in;
-uint32_t width, height;
-int intensity;
+rs_allocation img_in;   // alokacja wejściowa
+uint32_t width, height; // wymiary obrazu
+int intensity;          // moc maski
 //static float laplacian[9] = { 0, -1, 0, -1, 0, -1, 0, -1, 0 };
 
+// maski wykorzystane w algorytmie
 static float laplacian_3[9] = { -1, -1, -1, -1, 9, -1, -1, -1, -1};
 static float laplacian_2[9] = { 0, -1, 0, -1, 5, -1, 0, -1, 0};
 static float laplacian_1[9] = { 1, -2, 1, -2, 5, -2, 1, -2, 1};
@@ -23,6 +24,7 @@ void init(){
 }
 */
 
+// kernel odpowiedzialny za wzmocnienie szczegółowości piksela, na podstawie pikseli sąsiednich, z wagami określonymi przez maskę
 uchar4 __attribute__((kernel)) sharp(uchar4 pixel_in, uint32_t x, uint32_t y){
  //laplacian[4] = intensity + 5.0f;
  float* laplacian;

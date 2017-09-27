@@ -4,7 +4,7 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-
+// kernel przekształcający piksele obrazu tak, aby otrzymać efekt zamrożenia fotografii
 uchar4 __attribute__((kernel)) ice_filter(uchar4 pixel_in, uint32_t x, uint32_t y){
 
     float4 full_pixel = rsUnpackColor8888(pixel_in);

@@ -5,6 +5,7 @@
 #pragma rs_fp_relaxed
 
 
+// kernel odpowiedzialny za realizację filtra ogień
 uchar4 __attribute__((kernel)) fire_filter(uchar4 pixel_in, uint32_t x, uint32_t y){
 
     float4 full_pixel = rsUnpackColor8888(pixel_in);

@@ -15,7 +15,13 @@
         android:icon="@mipmap/info"
         android:title="@string/action_img_info"
         app:showAsAction="always|withText" />
-
+    <!--
+    <item
+        android:id="@+id/action_hardware_info"
+        android:icon="@mipmap/fedi_hardware_info"
+        android:title="@string/action_hardware_info"
+        app:showAsAction="always|withText" />
+    -->
     <item
         android:id="@+id/action_reset_scale"
         android:icon="@mipmap/reset"

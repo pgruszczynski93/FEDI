@@ -6,7 +6,8 @@
 
 int decomposition_type;
 
-uchar4 __attribute__((kernel)) grayscale_desaturation(uchar4 pixel_in, uint32_t x, uint32_t y){
+// kernel obliczający skalę szarości piksela dokonując dekompozycji
+uchar4 __attribute__((kernel)) grayscale_decomposition(uchar4 pixel_in, uint32_t x, uint32_t y){
     float4 full_pix = rsUnpackColor8888(pixel_in);
     float3 rgb = full_pix.rgb;
     float grayscale = (decomposition_type) ? max(max(rgb.r, rgb.g), rgb.b) : min(min(rgb.r, rgb.g), rgb.b);

@@ -4,8 +4,9 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-rs_allocation img_in;
-int32_t width, height, mask_type;
+rs_allocation img_in;   // alokacja wejściowa
+int32_t width, height, mask_type;   // szerokość, wysokość, typ maski
+// zdefiniowanie masek przekształceń
 static float mask_0[9] = {-1,0,1, -1,0,1, -1,0,1};
 static float mask_1[9] = { -2, -2, -0, -2, 6, 0, 0, 0, 0};
 static float mask_2[9] = { -4, -4, -0, -4, 12, 0, 0, 0, 0};
@@ -20,12 +21,14 @@ static float mask_10[9] = { 1, 1, 0, 1, 1, -1, 0, -1, -1};
 static float mask_11[9] = { 1, 1, 1, 0, 1, 0, -1, -1, -1};
 static float mask_12[9] = { 0, 1, 1, -1, 1, 1, -1, -1, 0};
 
+// inicjalizacja
 void setup(){
     width = rsAllocationGetDimX(img_in);
     height = rsAllocationGetDimY(img_in);
 }
 
 // wejscie do odcieni szarosci dla mask <4
+// kernel uwypuklający piksel
 uchar4 __attribute__((kernel)) emboss_relief_filter(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba;
     float3 new_rgb = {0,0,0};

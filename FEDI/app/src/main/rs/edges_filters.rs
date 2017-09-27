@@ -4,15 +4,17 @@
 #pragma rs java_package_name(com.example.przemek.fedi)
 #pragma rs_fp_relaxed
 
-rs_allocation img_in;
-int32_t width, height;
-static float y_direction[9] = { 1, 2, 1, 0, 0, 0, -1, -2, -1}, x_direction[9] = { 1, 0, -1, 2, 0, -2, 1, 0, -1};
+rs_allocation img_in;   // alokacja wejściowa
+int32_t width, height;  // szerokość i wyskość obrazu
+static float y_direction[9] = { 1, 2, 1, 0, 0, 0, -1, -2, -1}, x_direction[9] = { 1, 0, -1, 2, 0, -2, 1, 0, -1}; // maski określające kierunki krawędzi
 
+//inicjalizacja zmiennych
 void setup(){
     width = rsAllocationGetDimX(img_in);
     height = rsAllocationGetDimY(img_in);
 }
 
+// kernel wykrywający krawędzie, obliczający wartość piksela wedlug algorytmu Krzyż Robertsa
 uchar4 __attribute__((kernel)) robers_filter(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba = rsUnpackColor8888(in);
     float4 pix_1, pix_2, pix_3;
@@ -28,6 +30,7 @@ uchar4 __attribute__((kernel)) robers_filter(uchar4 in, uint32_t x, uint32_t y){
     return rsPackColorTo8888(rgba.rgb);
 }
 
+// kernel wykrywający krawędzie, obliczający wartość piksela wedlug algorytmu Sobela
 uchar4 __attribute__((kernel)) sobel_filter(uchar4 in, uint32_t x, uint32_t y){
     float4 rgba ;
     uint32_t pos_x = x+1, pos_y = y+1;

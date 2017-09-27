@@ -21,8 +21,6 @@ import java.io.IOException;
 
 public class ZoomPinchImageView extends ImageView {
 
-
-    // dorobic AscyncTask
     final static float _minZoom = 1.f, _maxZoom = 3.f;
     final static int NONE = 0, PAN = 0, ZOOM = 2;
 
